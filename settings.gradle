@@ -11,11 +11,31 @@ pluginManagement {
         gradlePluginPortal()
     }
 }
+
+def localProperties = new Properties()
+def localPropertiesFile = new File(rootDir, "local.properties")
+
+if (localPropertiesFile.exists()) {
+    localPropertiesFile.withInputStream { stream ->
+        localProperties.load(stream)
+    }
+}
+
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
         google()
         mavenCentral()
+        maven {
+            //name = "BlueFrogRobotics"
+            url "https://bluefrogrobotics.jfrog.io/artifactory/bluefrogrobotics-libs-release-local/"
+
+            //accessing properties from gradle.properties
+            credentials {
+                username = localProperties.getProperty("maven_user")
+                password = localProperties.getProperty("maven_password")
+            }
+        }
     }
 }
 
