@@ -1,4 +1,4 @@
-package com.example.buddychat.services.SpeechToTextService.stt;
+package com.example.buddychat;
 
 public interface SttListener {
     void onSpeechResult(String text);
