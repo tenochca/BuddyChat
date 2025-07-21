@@ -2,8 +2,11 @@ package com.example.buddychat;
 import com.bfr.buddysdk.BuddySDK;
 import com.bfr.buddysdk.services.speech.STTTask;
 import com.bfr.buddy.speech.shared.ISTTCallback;
+import com.bfr.buddy.speech.shared.STTResult;
+import com.bfr.buddy.speech.shared.STTResultsData;
 
 import android.content.res.AssetManager; // Required for Cerence local FCF
+import android.os.RemoteException;
 import android.util.Log;
 
 import java.util.Locale;
@@ -146,4 +149,43 @@ public class BuddySpeechToTextService implements SpeechToTextService {
     public void releaseService() {
 
     }
+
+    private final ISTTCallback.Stub serviceSttCallback = new ISTTCallback.Stub() {
+        @Override
+        public void onSuccess(STTResultsData iResults) throws RemoteException {
+            Log.i(TAG, "STT onSuccess received data.");
+            if (appSttListener == null) {
+                Log.w(TAG, "appSttListener is null in onSuccess, cannot propagate result.");
+                return;
+            }
+
+            if (iResults != null && iResults.getResults() != null && !iResults.getResults().isEmpty()) {
+                // first result as most relevant
+                STTResult topResult = iResults.getResults().get(0);
+                String utterance = topResult.getUtterance();
+                float confidence = topResult.getConfidence(); // Assuming getConfidence() returns a float
+                // String rule = topResult.getRule();
+
+                Log.i(TAG, "Utterance: " + utterance + ", Confidence: " + confidence);
+                appSttListener.onSpeechResult(utterance, confidence);
+
+                // If not continuous, the task might stop itself or need explicit stopping/re-initialization.
+                // Our service's isListening flag would be managed by start/stop/pause calls.
+            } else {
+                Log.w(TAG, "STT onSuccess but results are empty or null.");
+                // For clarity, we can call onError.
+                appSttListener.onError("No speech recognized or empty results.");
+            }
+        }
+
+        @Override
+        public void onError(String iError) throws RemoteException {
+            Log.e(TAG, "STT onError: " + iError);
+            if (appSttListener == null) {
+                Log.w(TAG, "appSttListener is null in onError, cannot propagate error.");
+                return;
+            }
+            appSttListener.onError(iError);
+            isListening = false; // Assume listening stops on error
+        }
 }
