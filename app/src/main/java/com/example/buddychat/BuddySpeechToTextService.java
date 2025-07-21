@@ -130,9 +130,15 @@ public class BuddySpeechToTextService implements SpeechToTextService {
 
         Log.d(TAG, "Starting STT task, continuous: " + listenContinuously);
         try {
-            currentSttTask.start(listenContinuously, ); //TODO implement callback
+            currentSttTask.start(listenContinuously, serviceSttCallback);
+            isListening = true;
+        } catch (Exception e) {
+            Log.e(TAG, "Error starting STT task: " + e.getMessage(), e);
+            isListening = false;
+            if (this.appSttListener != null) {
+                this.appSttListener.onError("Error starting STT: " + e.getMessage());
+            }
         }
-
     }
 
     @Override
