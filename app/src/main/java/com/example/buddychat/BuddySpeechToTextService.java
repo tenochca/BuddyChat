@@ -188,4 +188,5 @@ public class BuddySpeechToTextService implements SpeechToTextService {
             appSttListener.onError(iError);
             isListening = false; // Assume listening stops on error
         }
+    };
 }
