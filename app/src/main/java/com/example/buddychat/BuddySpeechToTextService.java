@@ -165,12 +165,45 @@ public class BuddySpeechToTextService implements SpeechToTextService {
 
     @Override
     public void stopListening() {
-
+        if (currentSttTask == null) {
+            Log.w(TAG, "Cannot stop. STT task is already null.");
+            return;
+        }
+        Log.d(TAG, "Stopping STT Task...");
+        try {
+            currentSttTask.stop();
+            Log.i(TAG, "STT Task Stopped");
+            isListening = false;
+            isInitialized = false;
+            if (this.appSttListener != null) {
+                this.appSttListener.onSttStopped();
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error stopping STT task: " + e.getMessage());
+            if (this.appSttListener != null) {
+                this.appSttListener.onError("Error stopping STT: " + e.getMessage());
+            }
+        }
+        // To fully release and require a new prepareSTTEngine call:
+        // currentSttTask = null;
+        // isInitialized = false;
     }
 
     @Override
     public void releaseService() {
-
+        Log.d(TAG, "Releasing STT service and current task");
+        if (currentSttTask != null) {
+            try {
+                currentSttTask.stop();
+            } catch (Exception e) {
+                Log.e(TAG, "Error stopping task during release: " + e.getMessage(), e);
+            }
+            currentSttTask = null;
+        }
+        isInitialized = false;
+        isListening = false;
+        this.appSttListener = null;
+        this.assetManager = null;
     }
 
     private final ISTTCallback.Stub serviceSttCallback = new ISTTCallback.Stub() {
