@@ -1,6 +1,7 @@
 package com.example.buddychat;
 import com.bfr.buddysdk.BuddySDK;
 import com.bfr.buddysdk.services.speech.STTTask;
+import com.bfr.buddy.speech.shared.ISTTCallback;
 
 import android.content.res.AssetManager; // Required for Cerence local FCF
 import android.util.Log;
@@ -112,6 +113,22 @@ public class BuddySpeechToTextService implements SpeechToTextService {
 
     @Override
     public void startListening(boolean listenContinuously) {
+        if (currentSttTask == null || !isInitialized) {
+            Log.e(TAG, "STT task is null or not initialized, Call prepareSTTEngine and initializeListening first");
+            if (this.appSttListener != null) {
+                this.appSttListener.onError("STT not ready to start. Prepare and initialize first");
+            }
+            return;
+        }
+        if (isListening) {
+            Log.w(TAG, "STT is already listening");
+            return;
+        }
+
+        Log.d(TAG, "Starting STT task, continuous: " + listenContinuously);
+        try {
+            currentSttTask.start(listenContinuously, ); //TODO implement callback
+        }
 
     }
 
