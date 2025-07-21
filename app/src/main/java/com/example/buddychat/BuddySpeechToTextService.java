@@ -77,8 +77,38 @@ public class BuddySpeechToTextService implements SpeechToTextService {
 
     @Override
     public void initializeListening(SttListener listener) {
+        this.appSttListener = listener;
+        if (currentSttTask == null) {
+            Log.e(TAG, "STT task is null. Call prepareSTTEngine first.");
 
+            if (this.appSttListener != null) {
+                this.appSttListener.onError("STT engine not prepared. ");
+            }
+            return;
+        }
+        if (isInitialized) {
+            Log.w(TAG, "STT task already initialized.");
+            if (this.appSttListener != null) {
+                this.appSttListener.onSttReady();
+            }
+            return;
+        }
+        Log.d(TAG, "Initializing STT task");
+        try {
+            currentSttTask.initialize();
+            isInitialized = true;
+            Log.i(TAG, "STT Task Initialized");
+            if (this.appSttListener != null) {
+                this.appSttListener.onSttReady();
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error initializing STT task" + e.getMessage(), e);
+            if (this.appSttListener != null) {
+                this.appSttListener.onError("Error initializing STT: " + e.getMessage());
+            }
+        }
     }
+
 
     @Override
     public void startListening(boolean listenContinuously) {
