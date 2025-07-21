@@ -143,7 +143,24 @@ public class BuddySpeechToTextService implements SpeechToTextService {
 
     @Override
     public void pauseListening() {
-
+        if (currentSttTask == null || !isInitialized) {
+            Log.w(TAG, "Cannot pause. STT task is null of not currently listening");
+            return;
+        }
+        Log.d(TAG, "Pausing STT task...");
+        try {
+            currentSttTask.pause();
+            isListening = false;
+            Log.i(TAG, "STT Task Paused");
+            if (this.appSttListener != null) {
+                this.appSttListener.onSttPaused();
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error pausing STT task: " + e.getMessage(), e);
+            if (this.appSttListener != null) {
+                this.appSttListener.onError("Error pausing STT: " + e.getMessage());
+            }
+        }
     }
 
     @Override
