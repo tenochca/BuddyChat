@@ -4,6 +4,7 @@
 
     <uses-permission android:name="com.bfr.buddy.resource.SPEECH" />
     <uses-permission android:name="com.bfr.buddy.resource.LISTEN" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
 
     <application
         android:allowBackup="true"
