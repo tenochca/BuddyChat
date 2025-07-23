@@ -6,27 +6,41 @@ import android.util.Log;
 
 import java.io.IOException;
 import okhttp3.*;
-import com.google.gson.Gson;
 
+import com.example.buddychat.network.model.ApiResponse;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+
+import com.example.buddychat.network.model.Profile;
+import com.example.buddychat.network.model.AuthResponse;
 
 
 // ====================================================================
 // API call utility
 // ====================================================================
+// Right now just logging in & health check
 public class NetworkUtils {
     // --------------------------------------------------------------------
     // Constants
     // --------------------------------------------------------------------
-    private static final OkHttpClient CLIENT = new OkHttpClient(); // Re-used client
+    public static final OkHttpClient CLIENT = new OkHttpClient(); // Re-used client
     private static final Gson GSON = new Gson();
     private static final String TAG  = "HTTP";
-    private static final String BASE = "https://cognibot.org";
+    private static final String BASE = "https://sandbox.cognibot.org/api";
 
     // --------------------------------------------------------------------
-    // Caller passes a callback that receives a parsed object (or error)
+    // Callbacks
     // --------------------------------------------------------------------
     public interface HealthCallback {
         void onSuccess(ApiResponse resp);
+        void onError(Throwable t);
+    }
+    public interface AuthCallback {
+        void onSuccess(String accessToken);
+        void onError(Throwable t);
+    }
+    public interface ProfileCallback {
+        void onSuccess(Profile p);
         void onError(Throwable t);
     }
 
@@ -38,9 +52,7 @@ public class NetworkUtils {
 
         CLIENT.newCall(request).enqueue(new Callback() {
             @Override
-            public void onFailure(@NonNull Call call, @NonNull IOException e) {
-                Log.e(TAG, "Ping failed", e);
-            }
+            public void onFailure(@NonNull Call call, @NonNull IOException e) {Log.e(TAG, "Ping failed", e);}
 
             @Override
             public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
@@ -63,12 +75,72 @@ public class NetworkUtils {
         String message = String.format("Username: %s, Password: %s", apiUser, apiPass);
 
         Log.d("TEST", message);
-
-
-        RequestBody body = FormBody.create(
-                "username=" + apiUser + "&password=" + apiPass,
-                MediaType.get("application/x-www-form-urlencoded")
-        );
-
     }
+
+    // --------------------------------------------------------------------
+    // Login
+    // --------------------------------------------------------------------
+    public static void login(AuthCallback cb) {
+        // Setup the request payload
+        JsonObject payload = new JsonObject();
+        payload.addProperty("username", BuildConfig.API_USER);
+        payload.addProperty("password", BuildConfig.API_PASS);
+
+        String endpoint = String.format("%s/token/", BASE);
+        RequestBody body = RequestBody.create(GSON.toJson(payload), MediaType.get("application/json"));
+        Request     req  = new Request.Builder()
+                .url(endpoint)
+                .post(body).build();
+
+        // Logging
+        Log.d("LOGIN", String.format("Calling %s with username: %s, password: %s", endpoint, BuildConfig.API_USER, BuildConfig.API_PASS));
+
+        // Make the API call
+        CLIENT.newCall(req).enqueue(new Callback() {
+            @Override
+            public void onFailure(@NonNull Call c, @NonNull IOException e) { cb.onError(e); }
+
+            @Override
+            public void onResponse(@NonNull Call c, @NonNull Response r) {
+                try (ResponseBody b = r.body()) {
+                    if (!r.isSuccessful()) throw new IOException("HTTP " + r.code());
+                    String raw = b.string();
+                    Log.d("HTTP", "Token JSON = " + raw);
+
+                    AuthResponse ar = GSON.fromJson(raw, AuthResponse.class);
+                    cb.onSuccess(ar.access);
+                    Log.d("LOGIN", "Success");
+                } catch (Exception ex) { cb.onError(ex); }
+            }
+        });
+    }
+
+    // --------------------------------------------------------------------
+    // Use tokens to get profile information
+    // --------------------------------------------------------------------
+    public static void fetchProfile(String accessToken, ProfileCallback cb) {
+        Request req = new Request.Builder()
+                .url(BASE + "/profile/")
+                .header("Authorization", "Bearer " + accessToken)
+                .get().build();
+
+        CLIENT.newCall(req).enqueue(new Callback() {
+            @Override public void onFailure (@NonNull Call c, @NonNull IOException e) { cb.onError(e); }
+            @Override public void onResponse(@NonNull Call c, @NonNull Response r) {
+                try (ResponseBody b = r.body()) {
+                    if (!r.isSuccessful()) throw new IOException("HTTP " + r.code());
+                    // Read the response once
+                    String raw = b.string();
+                    Log.d("HTTP", "PROFILE JSON = " + raw);
+
+                    Profile p = GSON.fromJson(raw, Profile.class);
+                    cb.onSuccess(p);
+
+                } catch (Exception ex) { cb.onError(ex); }
+            }
+        });
+    }
+
+    private NetworkUtils() {}   // no instances
+
 }
