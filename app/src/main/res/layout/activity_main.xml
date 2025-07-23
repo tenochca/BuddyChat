@@ -7,50 +7,55 @@
     android:layout_height="match_parent"
     tools:context="com.example.buddychat.MainActivity">
 
-    <Button
-        android:id="@+id/buttonHello"
+    <Button android:id="@+id/buttonHello"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="280dp"
-        android:layout_marginTop="180dp"
+        android:layout_marginTop="100dp"
+
         android:text="Hello"
+        android:textSize="20sp"
+
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <Button
-        android:id="@+id/buttonLogin"
+    <Button android:id="@+id/buttonLogin"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="40dp"
-        android:layout_marginTop="180dp"
+        android:layout_marginTop="100dp"
+
         android:text="Login"
+        android:textSize="20sp"
+
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <TextView
-        android:id="@+id/textUserInfo"
+    <TextView android:id="@+id/textUserInfo"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginStart="20dp"
+        android:layout_marginStart="40dp"
         android:layout_marginEnd="40dp"
-        android:layout_marginTop="80dp"
+        android:layout_marginTop="40dp"
 
         android:text="Not logged in yet"
-        android:background="#FFBB86FC"
+        android:textSize="20sp"
+
+        android:background="#eaecee"
         android:padding="8dp"
 
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <TextView
-        android:id="@+id/textStatus"
+    <TextView android:id="@+id/textStatus"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginStart="40dp"
         android:layout_marginEnd="40dp"
-        android:layout_marginTop="280dp"
+        android:layout_marginTop="180dp"
 
-        android:background="#FFBB86FC"
+        android:textSize="16sp"
+        android:background="@drawable/tv_user_info_bg"
         android:padding="8dp"
 
         app:layout_constraintStart_toStartOf="parent"
@@ -63,10 +68,12 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="40dp"
         android:layout_marginTop="380dp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
+
         android:text="Start Chat"
-        />
+        android:textSize="20sp"
+
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

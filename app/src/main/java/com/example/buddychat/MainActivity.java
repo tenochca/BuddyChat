@@ -110,7 +110,7 @@ public class MainActivity extends BuddyActivity {
 
                 NetworkUtils.fetchProfile(token, new NetworkUtils.ProfileCallback() {
                     @Override public void onSuccess(Profile p) {
-                        runOnUiThread(() -> textUserInfo.setText(String.format("%s %s | %s | %s", p.plwd.first_name, p.plwd.last_name, p.plwd.username, p.role)));
+                        runOnUiThread(() -> textUserInfo.setText(String.format("%s %s | %s", p.plwd.first_name, p.plwd.last_name, p.plwd.username)));
                         runOnUiThread(() -> textStatus  .setText(String.format("Welcome %s", p.plwd.username)));
                         runOnUiThread(() -> Toast.makeText(MainActivity.this, String.format("Welcome %s", p.plwd.username), Toast.LENGTH_SHORT).show());
                     }
