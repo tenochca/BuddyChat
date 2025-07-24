@@ -7,7 +7,6 @@ import android.util.Log;
 import java.io.IOException;
 import okhttp3.*;
 
-import com.example.buddychat.network.model.ApiResponse;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 
@@ -26,15 +25,17 @@ public class NetworkUtils {
     public static final OkHttpClient CLIENT = new OkHttpClient(); // Re-used client
     private static final Gson GSON = new Gson();
     private static final String TAG  = "HTTP";
-    private static final String BASE = "https://sandbox.cognibot.org/api";
+    //private static final String BASE = "https://sandbox.cognibot.org/api";
+    //private static final String BASE = "http://10.0.2.2:8000/api";
+    private static final String BASE =
+            "1".equals(BuildConfig.TEST_LOCAL)
+                    ? "http://10.0.2.2:8000/api"            // local docker container
+                    : "https://sandbox.cognibot.org/api";   // cloud server
+
 
     // --------------------------------------------------------------------
     // Callbacks
     // --------------------------------------------------------------------
-    public interface HealthCallback {
-        void onSuccess(ApiResponse resp);
-        void onError(Throwable t);
-    }
     public interface AuthCallback {
         void onSuccess(String accessToken);
         void onError(Throwable t);
@@ -48,7 +49,7 @@ public class NetworkUtils {
     // Pings the /health endpoint and logs the HTTP status + body
     // --------------------------------------------------------------------
     public static void pingHealth() {
-        Request request = new Request.Builder().url(BASE + "/health").get().build();
+        Request request = new Request.Builder().url(BASE + "/health/").get().build();
 
         CLIENT.newCall(request).enqueue(new Callback() {
             @Override

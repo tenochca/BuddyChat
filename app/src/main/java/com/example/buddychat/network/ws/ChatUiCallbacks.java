@@ -1,5 +1,7 @@
 package com.example.buddychat.network.ws;
 
+import com.example.buddychat.R;
+
 import android.util.Log;
 import android.os.Handler;
 import android.os.Looper;
@@ -7,6 +9,9 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.core.util.Consumer;
+
+import org.json.JSONObject;
+import org.json.JSONException;
 
 // ====================================================================
 // Handles the WebSocket responses
@@ -37,23 +42,37 @@ public class ChatUiCallbacks implements ChatListener {
     @Override public void onOpen() {
         ui.post(() -> {
             runningStateSink.accept(true);  // tells MainActivity
-            startEndBtn.setText("End Chat");
+            startEndBtn.setText(R.string.end_chat);
             Toast.makeText(startEndBtn.getContext(), "Chat started", Toast.LENGTH_SHORT).show();
             Log.d(TAG, "Chat started");
         });
     }
 
-    @Override public void onMessage(String json) {
-        ui.post(() -> {
-            statusView.setText(String.format("RX: %s", json));
-            Log.d(TAG, String.format("RX: %s", json));
-        });
+    @Override public void onMessage(String raw) {
+        try {
+            JSONObject obj  = new JSONObject(raw);
+            String type     = obj.optString("type", "");
+            if (!"llm_response".equals(type)) return;     // ignore other message kinds
+
+            final String body = obj.optString("data", "(empty)");
+            final String time = obj.optString("time", "");
+
+            // Hop to UI thread
+            ui.post(() -> {
+                Log.d(TAG, String.format("%s: %s", time, body));
+                statusView.setText(String.format("%s \n %s", body, time));
+            });
+
+        } catch (JSONException e) {
+            ui.post(() -> Toast.makeText(
+                    startEndBtn.getContext(), "Bad JSON: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+        }
     }
 
     @Override public void onClosed() {
         ui.post(() -> {
             runningStateSink.accept(false);  // tells MainActivity
-            startEndBtn.setText("Start Chat");
+            startEndBtn.setText(R.string.start_chat);
             Toast.makeText(startEndBtn.getContext(), "Chat ended", Toast.LENGTH_SHORT).show();
             Log.d(TAG, "Chat ended");
         });

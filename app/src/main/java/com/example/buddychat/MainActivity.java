@@ -8,6 +8,7 @@ import android.widget.Button;
 import android.widget.Toast;
 
 import com.bfr.buddysdk.BuddyActivity;
+import com.bfr.buddysdk.BuddySDK;
 
 // Speech System
 import com.example.buddychat.network.NetworkUtils;
@@ -69,6 +70,18 @@ public class MainActivity extends BuddyActivity {
 
         // Test the API
         NetworkUtils.pingHealth();
+    }
+
+    // ====================================================================
+    // Called when the BuddyRobot SDK is ready
+    // ====================================================================
+    // They also have button hookup in this function, not in onCreate()...
+    @Override
+    public void onSDKReady() {
+        Log.d("SDK", "Buddy SDK ready --------------");
+
+        // Transfer the touch information to BuddyCore in the background
+        BuddySDK.UI.setViewAsFace(findViewById(R.id.view_face));
     }
 
     // ====================================================================

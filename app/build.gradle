@@ -23,12 +23,14 @@ android {
 
     buildTypes {
         debug {
-            buildConfigField "String", "API_USER", "\"$apiUser\""
-            buildConfigField "String", "API_PASS", "\"$apiPass\""
+            buildConfigField "String", "API_USER",   "\"$apiUser\""
+            buildConfigField "String", "API_PASS",   "\"$apiPass\""
+            buildConfigField "String", "TEST_LOCAL", "\"$testlocal\""
         }
         release {
-            buildConfigField "String", "API_USER", "\"$apiUser\""
-            buildConfigField "String", "API_PASS", "\"$apiPass\""
+            buildConfigField "String", "API_USER",   "\"$apiUser\""
+            buildConfigField "String", "API_PASS",   "\"$apiPass\""
+            buildConfigField "String", "TEST_LOCAL", "\"$testlocal\""
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }

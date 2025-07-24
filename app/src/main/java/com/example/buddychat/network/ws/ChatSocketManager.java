@@ -1,5 +1,7 @@
 package com.example.buddychat.network.ws;
 
+import com.example.buddychat.BuildConfig;
+
 import android.util.Log;
 import androidx.annotation.NonNull;
 import okhttp3.*;
@@ -13,10 +15,9 @@ import com.example.buddychat.network.NetworkUtils;
 // Refers to a separate ChatListener utility for handling messages
 public class ChatSocketManager extends WebSocketListener {
     private static final String TAG  = "ChatWS";
-    private static final String URL  = "wss://sandbox.cognibot.org/ws/chat/";
     private static final OkHttpClient CLIENT = NetworkUtils.CLIENT;  // reused
 
-    private WebSocket socket;
+    private WebSocket    socket;
     private ChatListener listener;
 
     // --------------------------------------------------------------------
@@ -26,14 +27,26 @@ public class ChatSocketManager extends WebSocketListener {
         this.endChat();
         this.listener = listener;
 
-        HttpUrl url = new HttpUrl.Builder()
-                .scheme("https")
-                .host("sandbox.cognibot.org")
-                .addPathSegments("ws/chat/")   // keeps the trailing slash
-                .addQueryParameter("token",  accessToken)   // raw value
-                .addQueryParameter("source", "buddyrobot")
-                .build();
+        // URL of the WebSocket server
+        HttpUrl url;
 
+        // For local Docker container
+        if (BuildConfig.TEST_LOCAL == "1") {
+            url = new HttpUrl.Builder().scheme("http").host("10.0.2.2").port(8000).addPathSegments("ws/chat/")
+                    .addQueryParameter("token",  accessToken)
+                    .addQueryParameter("source", "buddyrobot")
+                    .build();
+        }
+        // For cloud server connection
+        else {
+             url = new HttpUrl.Builder()
+                    .scheme("https").host("sandbox.cognibot.org").addPathSegments("ws/chat/")
+                    .addQueryParameter("token",  accessToken)
+                    .addQueryParameter("source", "buddyrobot")
+                    .build();
+        }
+
+        // Connect
         Log.d("WS", String.format("Connecting to: %s", url.toString()));
         Request req = new Request.Builder().url(url).build();
         socket = CLIENT.newWebSocket(req, this);   // async open
