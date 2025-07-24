@@ -1,8 +1,19 @@
 package com.example.buddychat;
+import android.content.pm.PackageManager;
+import android.os.Bundle;
+import android.util.Log;
+import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.Spinner;
 import android.widget.TextView;
+import android.Manifest;
+
+
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
 import com.bfr.buddysdk.BuddyActivity;
 import com.bfr.buddysdk.BuddySDK;
@@ -16,6 +27,8 @@ import java.util.Locale;
 public class MainActivity extends BuddyActivity implements SttListener {
 
     private static final String TAG = "MainActivity";
+    private static final int PERMISSION_REQ_ID_RECORD_AUDIO = 22;
+    private static final int PERMISSION_REQ_ID_BUDDY_SDK = 23;
 
     private SpeechToTextService sttService;
     private TextView textViewRecognizedText;
@@ -42,6 +55,76 @@ public class MainActivity extends BuddyActivity implements SttListener {
     };
 
     private final Locale[] languageItems = {Locale.ENGLISH, Locale.FRENCH};
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.main_activity);
+
+        textViewRecognizedText = findViewById(R.id.textViewRecognizedText);
+        textViewStatus = findViewById(R.id.textViewStatus);
+        buttonToggleListen = findViewById(R.id.buttonToggleListen);
+        buttonPrepareEngine = findViewById(R.id.buttonPrepareEngine);
+        spinnerSttEngine = findViewById(R.id.spinnerSttEngine);
+        spinnerLanguage = findViewById(R.id.spinnerLanguage);
+        checkboxContinuousListen = findViewById(R.id.checkboxContinuousListen);
+
+        // We still need to explicitly ask for RECORD_AUDIO
+        checkAndRequestRecordAudioPermission();
+
+        // The BuddySpeechToTextService is instantiated AFTER onSDKReady or ensure BuddySDK.isSDKReady()
+        // For now, we'll initialize it in onSDKReady.
+
+        buttonToggleListen.setOnClickListener(v -> toggleListeningState());
+        buttonPrepareEngine.setOnClickListener(v -> prepareAndInitializeEngine());
+
+        setupSpinners();
+        updateUIStates();
+    }
+
+
+    private void checkAndRequestRecordAudioPermission() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.RECORD_AUDIO}, PERMISSION_REQ_ID_RECORD_AUDIO);
+        }
+    }
+
+    private void setupSpinners() {
+        // STT Engine Spinner
+        ArrayAdapter<String> sttEngineAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, sttEngineDisplayItems);
+        spinnerSttEngine.setAdapter(sttEngineAdapter);
+        spinnerSttEngine.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                selectedEngineType = sttEngineEnumItems[position];
+                // Invalidate current preparation if engine changes
+                isEnginePrepared = false;
+                isEngineInitialized = false;
+                updateUIStates();
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {}
+        });
+
+        //TODO implement updateUIStates and toggleListeningState and prepareAndInitializeEngine
+
+        // Language Spinner
+        ArrayAdapter<Locale> languageAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, languageItems);
+        spinnerLanguage.setAdapter(languageAdapter);
+        spinnerLanguage.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                selectedLocale = languageItems[position];
+                // Invalidate current preparation if language changes
+                isEnginePrepared = false;
+                isEngineInitialized = false;
+                updateUIStates();
+            }
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {}
+        });
+    }
 
     @Override
     public void onSpeechResult(String utterance, float confidence) {
