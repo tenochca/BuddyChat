@@ -10,6 +10,7 @@ import android.widget.CheckBox;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.Manifest;
+import android.widget.Toast;
 
 
 import androidx.core.app.ActivityCompat;
@@ -125,6 +126,87 @@ public class MainActivity extends BuddyActivity implements SttListener {
             public void onNothingSelected(AdapterView<?> parent) {}
         });
     }
+
+    @Override
+    public void onSDKReady() {
+        // This is crucial. BuddySDK is ready here.
+        Log.i(TAG, "Buddy SDK is Ready!");
+        Toast.makeText(this, "Buddy SDK Ready!", Toast.LENGTH_SHORT).show();
+
+        // Now it's safe to instantiate BuddySpeechToTextService
+        sttService = new BuddySpeechToTextService(getApplicationContext().getAssets());
+        // sttService.initializeService(); // Though in our current implementation, this doesn't do much
+
+        // Enable UI elements that depend on the SDK
+        buttonPrepareEngine.setEnabled(true);
+        spinnerLanguage.setEnabled(true);
+        spinnerSttEngine.setEnabled(true);
+        textViewStatus.setText("Status: Buddy SDK Ready. Please prepare an STT engine.");
+    }
+
+    private void prepareAndInitializeEngine() {
+        if (sttService == null) {
+            textViewStatus.setText("Status: Error - STT Service not available (BuddySDK not ready?)");
+            Log.e(TAG, "STT Service is null in prepareAndInitializeEngine. BuddySDK might not be ready.");
+            return;
+        }
+        if (!checkRecordAudioPermission()) return;
+
+        textViewStatus.setText("Status: Preparing " + selectedEngineType + " for " + selectedLocale.getDisplayLanguage() + "...");
+        sttService.prepareSTTEngine(selectedEngineType, selectedLocale);
+        isEnginePrepared = true; // Assume preparation itself is quick or synchronous for now.
+        // A more robust solution might have a callback for preparation.
+
+        textViewStatus.setText("Status: Initializing " + selectedEngineType + "...");
+        sttService.initializeListening(this); // 'this' activity is the SttListener
+        // onSttReady() callback will set isEngineInitialized = true
+    }
+
+    private void toggleListeningState() {
+        if (!isEngineInitialized) {
+            Toast.makeText(this, "Please prepare and initialize the STT Engine first.", Toast.LENGTH_SHORT).show();
+            textViewStatus.setText("Status: Engine not initialized. Click 'Prepare Engine'.");
+            return;
+        }
+
+        if (!checkRecordAudioPermission()) return;
+
+        if (isListening) {
+            sttService.stopListening(); // This will trigger onSttStopped -> isListening = false
+            // UI update will happen in onSttStopped
+        } else {
+            textViewRecognizedText.setText(""); // Clear previous text
+            boolean continuous = checkboxContinuousListen.isChecked();
+            sttService.startListening(continuous);
+            isListening = true; // Set immediately, callback might confirm/deny
+            textViewStatus.setText("Status: Listening...");
+        }
+        updateUIStates();
+    }
+
+    private boolean checkRecordAudioPermission() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
+                != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.RECORD_AUDIO},
+                    PERMISSION_REQ_ID_RECORD_AUDIO);
+            Toast.makeText(this, "Microphone permission is required to listen.", Toast.LENGTH_LONG).show();
+            return false;
+        }
+        return true;
+    }
+
+    private void updateUIStates() {
+        buttonPrepareEngine.setEnabled(true);
+        if (isEngineInitialized) {
+            buttonToggleListen.setEnabled(true);
+            buttonToggleListen.setText(isListening ? "Stop Listening" : "Start Listening");
+        } else {
+            buttonToggleListen.setEnabled(false);
+            buttonToggleListen.setText("Start Listening");
+        }
+    }
+
+    //Sttlistener callbacks start here
 
     @Override
     public void onSpeechResult(String utterance, float confidence) {
