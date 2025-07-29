@@ -13,6 +13,7 @@ import android.Manifest;
 import android.widget.Toast;
 
 
+import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
@@ -29,7 +30,7 @@ public class MainActivity extends BuddyActivity implements SttListener {
 
     private static final String TAG = "MainActivity";
     private static final int PERMISSION_REQ_ID_RECORD_AUDIO = 22;
-    private static final int PERMISSION_REQ_ID_BUDDY_SDK = 23;
+    // private static final int PERMISSION_REQ_ID_BUDDY_SDK = 23;
 
     private SpeechToTextService sttService;
     private TextView textViewRecognizedText;
@@ -60,7 +61,9 @@ public class MainActivity extends BuddyActivity implements SttListener {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Log.d(TAG, "Starting UI inflation");
         setContentView(R.layout.main_activity);
+        Log.d(TAG, "UI inflated");
 
         textViewRecognizedText = findViewById(R.id.textViewRecognizedText);
         textViewStatus = findViewById(R.id.textViewStatus);
@@ -209,27 +212,91 @@ public class MainActivity extends BuddyActivity implements SttListener {
     //Sttlistener callbacks start here
 
     @Override
-    public void onSpeechResult(String utterance, float confidence) {
-
+    public void onSpeechResult(final String utterance, final float confidence) {
+        runOnUiThread(() -> {
+            Log.i(TAG, "onSpeechResult: " + utterance + " (Confidence: " + confidence + ")");
+            textViewRecognizedText.append(utterance + " (Conf: " + String.format("%.2f", confidence) + ")\n");
+            // If not continuous, stop listening and update UI
+            if (!checkboxContinuousListen.isChecked()) {
+                isListening = false; // Manually update if stopListening isn't called immediately by service
+                textViewStatus.setText("Status: Finished listening.");
+                updateUIStates();
+            } else {
+                textViewStatus.setText("Status: Listening (heard something)...");
+            }
+        });
     }
 
     @Override
-    public void onError(String errorMessage) {
-
+    public void onError(final String errorMessage) {
+        runOnUiThread(() -> {
+            Log.e(TAG, "STT onError: " + errorMessage);
+            textViewStatus.setText("Status: Error - " + errorMessage);
+            Toast.makeText(MainActivity.this, "STT Error: " + errorMessage, Toast.LENGTH_LONG).show();
+            isListening = false;
+            updateUIStates();
+        });
     }
 
     @Override
     public void onSttReady() {
-
+        runOnUiThread(() -> {
+            Log.i(TAG, "STT Engine is Initialized and Ready!");
+            textViewStatus.setText("Status: Engine Ready. Click 'Start Listening'.");
+            isEngineInitialized = true;
+            updateUIStates();
+        });
     }
 
     @Override
     public void onSttPaused() {
-
+        runOnUiThread(() -> {
+            Log.i(TAG, "STT Paused");
+            textViewStatus.setText("Status: Paused.");
+            isListening = false; // Assuming pause means not actively listening for new input
+            updateUIStates();
+        });
     }
 
     @Override
     public void onSttStopped() {
+        runOnUiThread(() -> {
+            Log.i(TAG, "STT Stopped");
+            textViewStatus.setText("Status: Stopped. Ready to start again or re-prepare.");
+            isListening = false;
+            // isEngineInitialized remains true, as the task might just need to be started again.
+            // If stopListening in service invalidates initialization, then set isEngineInitialized = false
+            updateUIStates();
+        });
+    }
 
+    @Override
+    protected void onPause() {
+        super.onPause();
+        if (sttService != null && isListening) {
+            sttService.stopListening();
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (sttService != null) {
+            sttService.releaseService();
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults); // Important for BuddyActivity
+        if (requestCode == PERMISSION_REQ_ID_RECORD_AUDIO) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                Log.i(TAG, "RECORD_AUDIO permission granted.");
+                // You might want to auto-click prepare or enable button here.
+            } else {
+                Log.w(TAG, "RECORD_AUDIO permission denied.");
+                Toast.makeText(this, "Microphone permission denied. STT will not work.", Toast.LENGTH_LONG).show();
+            }
+        }
     }
 }
