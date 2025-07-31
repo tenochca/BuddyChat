@@ -110,8 +110,6 @@ public class MainActivity extends BuddyActivity implements SttListener {
             public void onNothingSelected(AdapterView<?> parent) {}
         });
 
-        //TODO implement updateUIStates and toggleListeningState and prepareAndInitializeEngine
-
         // Language Spinner
         ArrayAdapter<Locale> languageAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, languageItems);
         spinnerLanguage.setAdapter(languageAdapter);
