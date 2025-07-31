@@ -1,4 +1,4 @@
-package com.example.buddychat;
+package com.example.buddychat.stt;
 
 public interface SttListener {
     //called when speech is successfully recognized

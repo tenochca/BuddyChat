@@ -18,11 +18,10 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import com.bfr.buddysdk.BuddyActivity;
-import com.bfr.buddysdk.BuddySDK;
 
-import com.example.buddychat.BuddySpeechToTextService;
-import com.example.buddychat.SpeechToTextService;
-import com.example.buddychat.SttListener;
+import com.example.buddychat.stt.BuddySpeechToTextService;
+import com.example.buddychat.stt.SpeechToTextService;
+import com.example.buddychat.stt.SttListener;
 
 import java.util.Locale;
 

@@ -1,4 +1,5 @@
-package com.example.buddychat;
+package com.example.buddychat.stt;
+
 import java.util.Locale;
 
 public interface SpeechToTextService {
