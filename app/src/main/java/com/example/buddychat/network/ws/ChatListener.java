@@ -1,4 +1,9 @@
 package com.example.buddychat.network.ws;
 
-public class ChatListener {
+// interface for inbound websocket events
+public interface ChatListener {
+    void onOpen();
+    void onMessage(String json);
+    void onClosed();
+    void onError(Throwable t);
 }
