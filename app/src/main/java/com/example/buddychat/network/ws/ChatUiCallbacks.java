@@ -13,6 +13,9 @@ import androidx.core.util.Consumer;
 import org.json.JSONObject;
 import org.json.JSONException;
 
+// Text-To-Speech wrapper class
+import com.example.buddychat.tts.BuddyTTS;
+
 // ====================================================================
 // Handles the WebSocket responses
 // ====================================================================
@@ -30,7 +33,7 @@ public class ChatUiCallbacks implements ChatListener {
     // Handler to hop onto UI thread.
     private final Handler ui = new Handler(Looper.getMainLooper());
 
-    public ChatUiCallbacks(TextView statusView, Button   startEndBtn, Consumer<Boolean> runningStateSink) {
+    public ChatUiCallbacks(TextView statusView, Button startEndBtn, Consumer<Boolean> runningStateSink) {
         this.statusView        = statusView;
         this.startEndBtn       = startEndBtn;
         this.runningStateSink  = runningStateSink;
@@ -50,6 +53,7 @@ public class ChatUiCallbacks implements ChatListener {
 
     @Override public void onMessage(String raw) {
         try {
+            // Process the data we received
             JSONObject obj  = new JSONObject(raw);
             String type     = obj.optString("type", "");
             if (!"llm_response".equals(type)) return;     // ignore other message kinds
@@ -57,10 +61,14 @@ public class ChatUiCallbacks implements ChatListener {
             final String body = obj.optString("data", "(empty)");
             final String time = obj.optString("time", "");
 
-            // Hop to UI thread
+            // Hop to UI thread to do actions
             ui.post(() -> {
+                // Log the message
                 Log.d(TAG, String.format("%s: %s", time, body));
                 statusView.setText(String.format("%s \n %s", body, time));
+
+                // Fire off text-to-speech for this message
+                BuddyTTS.speak(body);
             });
 
         } catch (JSONException e) {
