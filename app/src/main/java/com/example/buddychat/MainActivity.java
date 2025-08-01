@@ -17,11 +17,11 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
-import androidx.core.util.Consumer; // For ChatUiCallbacks
+import androidx.core.util.Consumer;
 
 // BuddySDK Imports
 import com.bfr.buddysdk.BuddyActivity;
-import com.bfr.buddysdk.BuddySDK; // Added for isSDKReady check
+import com.bfr.buddysdk.BuddySDK;
 
 // Application-specific STT imports
 import com.example.buddychat.stt.BuddySpeechToTextService;
@@ -29,11 +29,10 @@ import com.example.buddychat.stt.SpeechToTextService;
 import com.example.buddychat.stt.SttListener;
 
 // Application-specific Network imports
-import com.example.buddychat.network.ws.NetworkUtils; // Corrected package if it's not in .ws
-import com.example.buddychat.network.model.Profile;   // For profile fetching
+import com.example.buddychat.network.ws.NetworkUtils; // Assuming this is correct, else adjust
 import com.example.buddychat.network.ws.ChatSocketManager;
 import com.example.buddychat.network.ws.ChatUiCallbacks;
-import com.example.buddychat.network.ws.ChatListener; // ChatSocketManager needs this for its listener
+import com.example.buddychat.network.ws.ChatListener;
 
 // JSON processing
 import org.json.JSONException;
@@ -43,7 +42,7 @@ import java.util.Locale;
 
 public class MainActivity extends BuddyActivity implements
         SttListener,
-        NetworkUtils.AuthCallback { // Implements AuthCallback for login results
+        NetworkUtils.AuthCallback {
 
     private static final String TAG = "MainActivity";
     private static final int PERMISSION_REQ_ID_RECORD_AUDIO = 22;
@@ -51,10 +50,11 @@ public class MainActivity extends BuddyActivity implements
     // --- UI Elements ---
     private TextView textViewRecognizedText;
     private TextView textViewStatus;
-    private TextView textViewChatbotResponse; // Added for future use
+    private TextView textViewChatbotResponse;
     private Button buttonToggleListen;
     private Button buttonPrepareEngine;
-    private Button buttonSignIn; // Added
+    private Button buttonSignIn;
+    private Button buttonConnectChat; // New Button
     private Spinner spinnerSttEngine;
     private Spinner spinnerLanguage;
     private CheckBox checkboxContinuousListen;
@@ -62,8 +62,8 @@ public class MainActivity extends BuddyActivity implements
     // --- STT Service ---
     private SpeechToTextService sttService;
     private boolean isListening = false;
-    private boolean isEnginePrepared = false; // STT engine selected and configured by prepareSTTEngine
-    private boolean isEngineInitialized = false; // STT service initialized by initializeListening (onSttReady callback)
+    private boolean isEnginePrepared = false;
+    private boolean isEngineInitialized = false;
     private SpeechToTextService.SttEngineType selectedEngineType = SpeechToTextService.SttEngineType.GOOGLE;
     private Locale selectedLocale = Locale.ENGLISH;
 
@@ -73,7 +73,7 @@ public class MainActivity extends BuddyActivity implements
             SpeechToTextService.SttEngineType.CERENCE_FREE_SPEECH,
             SpeechToTextService.SttEngineType.CERENCE_LOCAL_FCF
     };
-    private final Locale[] languageItems = {Locale.ENGLISH, Locale.FRENCH}; // Add more as needed
+    private final Locale[] languageItems = {Locale.ENGLISH, Locale.FRENCH};
 
     // --- Authentication & Networking ---
     private String accessToken;
@@ -81,7 +81,7 @@ public class MainActivity extends BuddyActivity implements
 
     // --- WebSocket Chat ---
     private ChatSocketManager chatSocketManager;
-    private ChatUiCallbacks chatUiCallbacks; // Will primarily handle incoming messages (later)
+    private ChatUiCallbacks chatUiCallbacks;
     private boolean isChatConnected = false;
 
 
@@ -91,49 +91,38 @@ public class MainActivity extends BuddyActivity implements
         setContentView(R.layout.main_activity);
         Log.d(TAG, "UI inflated");
 
-        // Initialize UI Elements
         initializeUI();
-
         checkAndRequestRecordAudioPermission();
 
-        // --- Initialize Networking Components ---
-        // NetworkUtils is static, no instance needed. Ping for testing.
         NetworkUtils.pingHealth();
-
         chatSocketManager = new ChatSocketManager();
 
-        // Consumer for ChatUiCallbacks to update MainActivity's view of WS connection state
         Consumer<Boolean> chatRunningStateConsumer = running -> {
             isChatConnected = running;
             runOnUiThread(() -> {
                 if (isChatConnected) {
                     textViewStatus.setText("Status: Chat connected. Ready to listen.");
                 } else {
-                    // ChatUiCallbacks itself will show "Chat ended" or error toasts.
-                    // If STT was active, might need to stop it here.
                     if (isListening) {
                         sttService.stopListening();
                     }
-                    textViewStatus.setText("Status: Chat disconnected. Sign in and prepare engine.");
+                    textViewStatus.setText("Status: Chat disconnected. Connect to chat or Sign In.");
                 }
-                updateUIStates();
+                updateUIStates(); // This will also update buttonConnectChat text
             });
         };
-        // Even if not displaying responses yet, ChatSocketManager needs a ChatListener.
-        // ChatUiCallbacks updates UI, so it's the right fit.
-        // Pass a button that ChatUiCallbacks can manage (e.g., a dedicated connect/disconnect chat button,
-        // or let it manage buttonSignIn for now, though its text changes might be odd for a sign-in button).
-        // For this step, let's keep it simple and pass buttonSignIn. We can refine this.
-        chatUiCallbacks = new ChatUiCallbacks(textViewChatbotResponse, buttonSignIn, chatRunningStateConsumer);
 
+        // Pass the new buttonConnectChat to ChatUiCallbacks
+        chatUiCallbacks = new ChatUiCallbacks(textViewChatbotResponse, buttonConnectChat, chatRunningStateConsumer);
 
         // --- Setup Listeners ---
-        buttonSignIn.setOnClickListener(v -> handleSignInOrConnectChat());
+        buttonSignIn.setOnClickListener(v -> signIn()); // Changed from handleSignInOrConnectChat
+        buttonConnectChat.setOnClickListener(v -> handleConnectOrDisconnectChat()); // New handler
         buttonToggleListen.setOnClickListener(v -> toggleListeningState());
         buttonPrepareEngine.setOnClickListener(v -> prepareAndInitializeEngine());
 
         setupSpinners();
-        updateUIStates(); // Initial UI state
+        updateUIStates();
     }
 
     private void checkAndRequestRecordAudioPermission() {
@@ -145,10 +134,11 @@ public class MainActivity extends BuddyActivity implements
     private void initializeUI() {
         textViewRecognizedText = findViewById(R.id.textViewRecognizedText);
         textViewStatus = findViewById(R.id.textViewStatus);
-        textViewChatbotResponse = findViewById(R.id.textViewChatbotResponse); // Initialize the new TextView
+        textViewChatbotResponse = findViewById(R.id.textViewChatbotResponse);
         buttonToggleListen = findViewById(R.id.buttonToggleListen);
         buttonPrepareEngine = findViewById(R.id.buttonPrepareEngine);
-        buttonSignIn = findViewById(R.id.buttonSignIn); // Initialize the new Button
+        buttonSignIn = findViewById(R.id.buttonSignIn);
+        buttonConnectChat = findViewById(R.id.buttonConnectChat); // Initialize the new button
         spinnerSttEngine = findViewById(R.id.spinnerSttEngine);
         spinnerLanguage = findViewById(R.id.spinnerLanguage);
         checkboxContinuousListen = findViewById(R.id.checkboxContinuousListen);
@@ -184,11 +174,10 @@ public class MainActivity extends BuddyActivity implements
 
     private void resetSttEngineStates() {
         if (isListening) {
-            sttService.stopListening(); // Stop if running
+            sttService.stopListening();
         }
         if (sttService != null) {
-            sttService.releaseService(); // Release current engine
-            // Re-instantiate if necessary, or ensure prepareSTTEngine handles being called again
+            sttService.releaseService();
             sttService = new BuddySpeechToTextService(getApplicationContext().getAssets());
         }
         isEnginePrepared = false;
@@ -198,53 +187,43 @@ public class MainActivity extends BuddyActivity implements
         updateUIStates();
     }
 
-    // --- SDK Ready ---
     @Override
     public void onSDKReady() {
         Log.i(TAG, "Buddy SDK is Ready!");
         Toast.makeText(this, "Buddy SDK Ready!", Toast.LENGTH_SHORT).show();
-
-        // Instantiate STT Service now that SDK is ready
         sttService = new BuddySpeechToTextService(getApplicationContext().getAssets());
-
         textViewStatus.setText("Status: Buddy SDK Ready. Please Sign In.");
-        updateUIStates(); // Update button states now that SDK is ready
+        updateUIStates();
     }
 
-    // --- Sign In and Chat Connection Logic ---
-    private void handleSignInOrConnectChat() {
+    // --- Sign In Logic (Simplified) ---
+    private void signIn() {
         if (!isSignedIn) {
             textViewStatus.setText("Status: Signing in...");
-            buttonSignIn.setEnabled(false); // Disable while signing in
-            NetworkUtils.login(this); // 'this' is the AuthCallback
-        } else if (!isChatConnected) {
-            // Already signed in, but chat not connected. Attempt to connect.
-            connectToChat();
+            buttonSignIn.setEnabled(false);
+            NetworkUtils.login(this);
         } else {
-            // Already signed in AND chat connected. Maybe disconnect? Or do nothing.
-            // For now, let's make it disconnect chat.
-            disconnectFromChat();
+            Toast.makeText(this, "Already signed in.", Toast.LENGTH_SHORT).show();
+            // signOut(); // need to implement signOut logic
         }
     }
 
-    @Override // NetworkUtils.AuthCallback
-    public void onSuccess(String token) { // Login successful
+    // --- AuthCallback ---
+    @Override
+    public void onSuccess(String token) {
         this.accessToken = token;
         this.isSignedIn = true;
         runOnUiThread(() -> {
             Log.i(TAG, "Sign-In Successful. Access Token: " + token);
             Toast.makeText(MainActivity.this, "Sign-In Successful!", Toast.LENGTH_SHORT).show();
-            textViewStatus.setText("Status: Signed In. Connecting to chat...");
-            // Automatically try to connect to chat after successful sign-in
-            connectToChat();
-            // Optionally fetch profile
-            // fetchUserProfile();
+            textViewStatus.setText("Status: Signed In. You can now connect to chat.");
+            // Do NOT auto-connect to chat here. User clicks buttonConnectChat.
             updateUIStates();
         });
     }
 
-    @Override // NetworkUtils.AuthCallback
-    public void onError(Throwable t) { // Login failed
+    @Override
+    public void onError(Throwable t) {
         this.accessToken = null;
         this.isSignedIn = false;
         runOnUiThread(() -> {
@@ -255,32 +234,38 @@ public class MainActivity extends BuddyActivity implements
         });
     }
 
-    private void connectToChat() {
-        if (!isSignedIn || accessToken == null || accessToken.isEmpty()) {
-            Log.w(TAG, "ConnectToChat called but not signed in or no token.");
-            textViewStatus.setText("Status: Please sign in first.");
-            Toast.makeText(this, "Please sign in to connect to chat.", Toast.LENGTH_SHORT).show();
+    // --- Chat Connection Logic (New Handler for buttonConnectChat) ---
+    private void handleConnectOrDisconnectChat() {
+        if (!isSignedIn) {
+            Toast.makeText(this, "Please Sign In first.", Toast.LENGTH_SHORT).show();
             return;
         }
-        if (isChatConnected) {
-            Log.i(TAG, "Chat already connected.");
+        if (!isChatConnected) {
+            connectToChat();
+        } else {
+            disconnectFromChat();
+        }
+    }
+
+    private void connectToChat() {
+        if (accessToken == null || accessToken.isEmpty()) {
+            Log.w(TAG, "ConnectToChat called but no token.");
+            textViewStatus.setText("Status: Error - No access token. Please sign in again.");
             return;
         }
         textViewStatus.setText("Status: Connecting to chat...");
-        // ChatSocketManager expects a ChatListener. ChatUiCallbacks implements this.
+        buttonConnectChat.setEnabled(false); // Disable while attempting to connect
         chatSocketManager.connect(accessToken, chatUiCallbacks);
-        updateUIStates(); // Update button text for connect/disconnect
+        // updateUIStates() will be called by the consumer when connection state changes
     }
 
     private void disconnectFromChat() {
         if (isChatConnected) {
-            chatSocketManager.endChat(); // This will trigger onClosed in ChatUiCallbacks
-            // isChatConnected will be set to false by the chatRunningStateConsumer
+            chatSocketManager.endChat();
             textViewStatus.setText("Status: Disconnecting chat...");
         }
-        updateUIStates();
+        // updateUIStates() will be called by the consumer
     }
-
 
     // --- STT Engine Preparation and Listening Logic ---
     private void prepareAndInitializeEngine() {
@@ -295,22 +280,20 @@ public class MainActivity extends BuddyActivity implements
             Toast.makeText(this, "Please Sign In first.", Toast.LENGTH_SHORT).show();
             return;
         }
-        // Chat should be connected before preparing engine ideally, or at least before listening
-        if (!isChatConnected) {
-            textViewStatus.setText("Status: Please ensure chat is connected (after sign-in).");
-            Toast.makeText(this, "Please ensure chat is connected first.", Toast.LENGTH_SHORT).show();
-            // return; // You might choose to allow preparation but not listening
+        if (!isChatConnected) { // Now explicitly require chat to be connected BEFORE preparing STT
+            textViewStatus.setText("Status: Please connect to chat before preparing STT engine.");
+            Toast.makeText(this, "Please connect to chat first.", Toast.LENGTH_SHORT).show();
+            return;
         }
 
         if (!checkRecordAudioPermission()) return;
 
         textViewStatus.setText("Status: Preparing " + selectedEngineType + " for " + selectedLocale.getDisplayLanguage() + "...");
         sttService.prepareSTTEngine(selectedEngineType, selectedLocale);
-        isEnginePrepared = true; // Mark as prepared. Real preparation might be async with its own callback.
+        isEnginePrepared = true;
 
         textViewStatus.setText("Status: Initializing " + selectedEngineType + " for listening...");
-        sttService.initializeListening(this); // 'this' activity is the SttListener
-        // onSttReady() callback will set isEngineInitialized = true and update UI
+        sttService.initializeListening(this);
     }
 
     private void toggleListeningState() {
@@ -320,34 +303,26 @@ public class MainActivity extends BuddyActivity implements
         }
         if (!isChatConnected) {
             Toast.makeText(this, "Chat is not connected. Please connect first.", Toast.LENGTH_LONG).show();
-            textViewStatus.setText("Status: Chat not connected.");
-            // Optionally, try to auto-connect chat here if signed in:
-            // if (isSignedIn && !isChatConnected) connectToChat();
             return;
         }
-        if (!isEngineInitialized) { // Check if STT engine is actually ready (via onSttReady callback)
+        if (!isEngineInitialized) {
             Toast.makeText(this, "STT Engine not initialized. Please 'Prepare Engine'.", Toast.LENGTH_SHORT).show();
-            textViewStatus.setText("Status: Engine not initialized. Click 'Prepare Engine'.");
             return;
         }
         if (!checkRecordAudioPermission()) return;
 
         if (isListening) {
             sttService.stopListening();
-            // isListening state and UI will be updated by onSttStopped/onSttPaused
         } else {
-            textViewRecognizedText.setText(""); // Clear previous recognized text
-            textViewChatbotResponse.setText(""); // Clear previous bot response (for future)
+            textViewRecognizedText.setText("");
+            textViewChatbotResponse.setText("");
             boolean continuous = checkboxContinuousListen.isChecked();
             sttService.startListening(continuous);
-            // Assume listening starts; onSttListening or onSttReady might confirm
-            // For now, let's manage isListening primarily through callbacks
+            // isListening will be set by onSttListening or implicitly before speech result
             textViewStatus.setText("Status: Listening...");
-            // isListening = true; // Better to set this in a callback like onSttListening
         }
         updateUIStates();
     }
-
 
     // --- SttListener Callbacks ---
     @Override
@@ -360,36 +335,26 @@ public class MainActivity extends BuddyActivity implements
                 Log.w(TAG, "Chat not connected. Cannot send utterance.");
                 textViewStatus.setText("Status: Recognized, but chat disconnected.");
                 Toast.makeText(MainActivity.this, "Chat not connected. Utterance not sent.", Toast.LENGTH_SHORT).show();
-                return; // Don't proceed to send if chat is not connected
+                return;
             }
 
-            // --- Send utterance to WebSocket API ---
             try {
                 JSONObject messageJson = new JSONObject();
-                messageJson.put("type", "transcription"); // As per your example
+                messageJson.put("type", "transcription");
                 messageJson.put("data", utterance);
-                // You might want to add other fields like a timestamp or userID if your API needs them
-
                 chatSocketManager.sendJson(messageJson.toString());
                 Log.d(TAG, "Sent to WebSocket: " + messageJson.toString());
                 textViewStatus.setText("Status: Utterance sent to chat API.");
-                // We are not handling the response display in this step.
-                // textViewChatbotResponse.setText("Waiting for API response...");
-
             } catch (JSONException e) {
                 Log.e(TAG, "JSONException while creating WebSocket message: " + e.getMessage());
                 Toast.makeText(MainActivity.this, "Error creating message for chat.", Toast.LENGTH_SHORT).show();
             }
-            // --- End send utterance ---
 
             if (!checkboxContinuousListen.isChecked() && isListening) {
-                // If not continuous, and we were listening, STT might stop itself,
-                // or we might need to explicitly stop it. BuddySpeechToTextService behavior dependent.
-                // For now, assume if not continuous, one result means we stop.
-                // sttService.stopListening(); // This would trigger onSttStopped
-                // isListening state will be managed by onSttStopped.
                 textViewStatus.setText("Status: Finished listening (single utterance).");
-            } else if (isListening) { // Still listening in continuous mode
+                // The STT service should call onSttStopped or onSttPaused if it stops.
+                // We rely on those callbacks to set isListening = false.
+            } else if (isListening) {
                 textViewStatus.setText("Status: Listening (heard something)...");
             }
         });
@@ -411,24 +376,23 @@ public class MainActivity extends BuddyActivity implements
         runOnUiThread(() -> {
             Log.i(TAG, "STT Engine is Initialized and Ready!");
             textViewStatus.setText("Status: STT Engine Ready. Click 'Start Listening'.");
-            isEngineInitialized = true; // CRITICAL: This confirms STT is usable
-            isEnginePrepared = true;    // If it's ready, it must have been prepared
-            isListening = false;      // Not actively listening yet
+            isEngineInitialized = true;
+            isEnginePrepared = true;
+            isListening = false;
             updateUIStates();
         });
     }
+    // Add this if your SttListener interface and BuddySpeechToTextService can provide it
+    // It helps manage the isListening state more accurately.
+    // public void onSttListening() {
+    // runOnUiThread(() -> {
+    // Log.i(TAG, "STT is actively listening.");
+    // textViewStatus.setText("Status: Listening...");
+    // isListening = true;
+    // updateUIStates();
+    // });
+    // }
 
-    // Optional: Add onSttListening if your service provides it for more precise state
-    /*
-    public void onSttListening() {
-        runOnUiThread(() -> {
-            Log.i(TAG, "STT is actively listening.");
-            isListening = true;
-            textViewStatus.setText("Status: Listening...");
-            updateUIStates();
-        });
-    }
-    */
 
     @Override
     public void onSttPaused() {
@@ -446,7 +410,6 @@ public class MainActivity extends BuddyActivity implements
             Log.i(TAG, "STT Stopped");
             textViewStatus.setText("Status: STT Stopped. Ready to start or re-prepare.");
             isListening = false;
-            // isEngineInitialized remains true typically, unless stop invalidates it.
             updateUIStates();
         });
     }
@@ -455,27 +418,26 @@ public class MainActivity extends BuddyActivity implements
     private void updateUIStates() {
 
         // Sign In Button
-        // It acts as Sign In, Connect Chat, Disconnect Chat based on state
-        buttonSignIn.setEnabled(true); // Always enabled if SDK is ready, logic inside handler
-        if (!isSignedIn) {
-            buttonSignIn.setText("Sign In");
-        } else if (!isChatConnected) {
-            buttonSignIn.setText("Connect Chat");
-        } else {
-            buttonSignIn.setText("Disconnect Chat");
-        }
+        buttonSignIn.setEnabled(!isSignedIn); // Enabled if SDK ready AND not signed in
+        buttonSignIn.setText("Sign In"); // Text is static now
+
+        // Connect Chat Button
+        // ChatUiCallbacks will set its text to "End Chat" or "Start Chat" (from strings.xml)
+        // We only manage its enabled state here.
+        buttonConnectChat.setEnabled(isSignedIn);
 
         // STT Engine Preparation
-        boolean canPrepareStt = sttService != null && isSignedIn; // Require sign-in to prepare
-        buttonPrepareEngine.setEnabled(canPrepareStt && !isEngineInitialized); // Can prepare if not already initialized
-        spinnerLanguage.setEnabled(canPrepareStt && !isEngineInitialized);
-        spinnerSttEngine.setEnabled(canPrepareStt && !isEngineInitialized);
+        // Can only prepare if SDK ready, signed in, AND CHAT IS CONNECTED
+        boolean canPrepareStt = isSignedIn && isChatConnected;
+        buttonPrepareEngine.setEnabled(canPrepareStt && !isEngineInitialized);
+        spinnerLanguage.setEnabled(canPrepareStt && !isEngineInitialized && !isListening);
+        spinnerSttEngine.setEnabled(canPrepareStt && !isEngineInitialized && !isListening);
 
         // STT Listening Button
         boolean canListenStt = isSignedIn && isChatConnected && isEngineInitialized;
         buttonToggleListen.setEnabled(canListenStt);
         buttonToggleListen.setText(isListening ? "Stop Listening" : "Start Listening");
-        checkboxContinuousListen.setEnabled(canListenStt && !isListening); // Can change mode if not actively listening
+        checkboxContinuousListen.setEnabled(canListenStt && !isListening);
     }
 
     // --- Permissions ---
@@ -496,7 +458,7 @@ public class MainActivity extends BuddyActivity implements
         if (requestCode == PERMISSION_REQ_ID_RECORD_AUDIO) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 Log.i(TAG, "RECORD_AUDIO permission granted.");
-                textViewStatus.setText("Status: Mic permission granted. Prepare engine or Sign In.");
+                textViewStatus.setText("Status: Mic permission granted. Sign In and connect to chat.");
             } else {
                 Log.w(TAG, "RECORD_AUDIO permission denied.");
                 Toast.makeText(this, "Microphone permission denied. STT will not work.", Toast.LENGTH_LONG).show();
@@ -513,10 +475,6 @@ public class MainActivity extends BuddyActivity implements
         if (sttService != null && isListening) {
             sttService.stopListening();
         }
-        // Consider if WebSocket should be disconnected onPause if not actively used in background
-        // if (isChatConnected) {
-        //     disconnectFromChat();
-        // }
     }
 
     @Override
@@ -527,10 +485,7 @@ public class MainActivity extends BuddyActivity implements
             sttService = null;
         }
         if (chatSocketManager != null) {
-            chatSocketManager.endChat(); // Ensure chat is ended
+            chatSocketManager.endChat();
         }
-        // OkHttpClient used by NetworkUtils and ChatSocketManager might have its own shutdown logic if needed
-        // but typically you don't explicitly shut down the shared client unless app is fully exiting and
-        // you need to release all resources immediately.
     }
 }
