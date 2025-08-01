@@ -38,7 +38,6 @@ public class ChatUiCallbacks implements ChatListener {
     @Override public void onOpen() {
         ui.post(() -> {
             runningStateSink.accept(true);  // tells MainActivity
-            startEndBtn.setText(R.string.end_chat);
             Toast.makeText(startEndBtn.getContext(), "Chat started", Toast.LENGTH_SHORT).show();
             Log.d(TAG, "Chat started");
         });
@@ -68,7 +67,6 @@ public class ChatUiCallbacks implements ChatListener {
     @Override public void onClosed() {
         ui.post(() -> {
             runningStateSink.accept(false);  // tells MainActivity
-            startEndBtn.setText(R.string.start_chat);
             Toast.makeText(startEndBtn.getContext(), "Chat ended", Toast.LENGTH_SHORT).show();
             Log.d(TAG, "Chat ended");
         });

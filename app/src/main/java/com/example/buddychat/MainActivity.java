@@ -87,6 +87,7 @@ public class MainActivity extends BuddyActivity implements
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        Log.d(TAG, "YOU SHOULD BE SEEING THIS");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main_activity);
         Log.d(TAG, "UI inflated");
@@ -269,7 +270,7 @@ public class MainActivity extends BuddyActivity implements
 
     // --- STT Engine Preparation and Listening Logic ---
     private void prepareAndInitializeEngine() {
-        if (!(sttService == null)) {
+        if (sttService == null) {
             textViewStatus.setText("Status: Error - BuddySDK not ready or STT Service unavailable.");
             Log.e(TAG, "STT Service is null or SDK not ready in prepareAndInitializeEngine.");
             Toast.makeText(this, "Buddy SDK not ready. Please wait.", Toast.LENGTH_SHORT).show();
