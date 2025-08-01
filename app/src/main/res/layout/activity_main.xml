@@ -61,6 +61,20 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
+    <TextView android:id="@+id/sttView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="40dp"
+        android:layout_marginEnd="40dp"
+        android:layout_marginTop="230dp"
+
+        android:textSize="16sp"
+        android:background="@drawable/tv_user_info_bg"
+        android:padding="8dp"
+
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
 
 
     <Button android:id="@+id/buttonStartEnd"
@@ -70,6 +84,19 @@
         android:layout_marginTop="380dp"
 
         android:text="Start Chat"
+        android:textSize="20sp"
+
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <Button android:id="@+id/buttonToggleTTS"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="250dp"
+
+        android:layout_marginTop="380dp"
+
+        android:text="Toggle TTS"
         android:textSize="20sp"
 
         app:layout_constraintStart_toStartOf="parent"

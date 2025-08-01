@@ -7,8 +7,11 @@ import android.widget.TextView;
 import android.widget.Button;
 import android.widget.Toast;
 
-import com.bfr.buddysdk.BuddyActivity;
+import java.util.Locale;
+
+// Buddy SDK
 import com.bfr.buddysdk.BuddySDK;
+import com.bfr.buddysdk.BuddyActivity;
 
 // Speech System
 import com.example.buddychat.network.NetworkUtils;
@@ -16,6 +19,11 @@ import com.example.buddychat.network.model.Profile;
 import com.example.buddychat.network.ws.ChatSocketManager;
 import com.example.buddychat.network.ws.ChatUiCallbacks;
 
+// BuddySDK.Speech wrappers
+import com.example.buddychat.stt.STTCallbacks;
+import com.example.buddychat.tts.BuddyTTS;
+import com.example.buddychat.stt.BuddySTT;
+import com.example.buddychat.stt.BuddySTT.Engine;
 
 // ====================================================================
 // Main Activity of the app; runs on startup
@@ -31,15 +39,19 @@ public class MainActivity extends BuddyActivity {
     // UI References
     private TextView textUserInfo;
     private TextView textStatus;
+    private TextView sttView;
+
     private Button   buttonHello;
     private Button   buttonLogin;
     private Button   buttonStartEnd;
+    private Button   buttonToggleTTS;
 
     // WebSocket related
     private volatile String            authToken;
     private          boolean           isRunning = false;
     private final    ChatSocketManager chat      = new ChatSocketManager();
     private          ChatUiCallbacks   chatCallbacks;
+    private          STTCallbacks      sttCallbacks;
 
     // ====================================================================
     // Startup code
@@ -54,19 +66,24 @@ public class MainActivity extends BuddyActivity {
         // --------------------------------------------------------------------
         // Get each UI element (not sure if this is the best way to do this)
         // --------------------------------------------------------------------
-        textUserInfo   = findViewById(R.id.textUserInfo  );
-        textStatus     = findViewById(R.id.textStatus    );
+        textUserInfo   = findViewById(R.id.textUserInfo);
+        textStatus     = findViewById(R.id.textStatus  );
+        sttView        = findViewById(R.id.sttView     );
 
         // Button setup
-        buttonHello    = findViewById(R.id.buttonHello   );
-        buttonLogin    = findViewById(R.id.buttonLogin   );
-        buttonStartEnd = findViewById(R.id.buttonStartEnd);
+        buttonHello     = findViewById(R.id.buttonHello    );
+        buttonLogin     = findViewById(R.id.buttonLogin    );
+        buttonStartEnd  = findViewById(R.id.buttonStartEnd );
+        buttonToggleTTS = findViewById(R.id.buttonToggleTTS);
         wireButtons();
 
         // WebSocket callback object
-         chatCallbacks = new ChatUiCallbacks(textStatus, buttonStartEnd,
+        chatCallbacks = new ChatUiCallbacks(textStatus, buttonStartEnd,
                 (Consumer<Boolean>) running -> isRunning = running  // lambda target
         );
+
+        // STT callback object (we can pass it stuff here, like the textView)
+        sttCallbacks = new STTCallbacks(sttView);
 
         // Test the API
         NetworkUtils.pingHealth();
@@ -79,10 +96,19 @@ public class MainActivity extends BuddyActivity {
     @Override
     public void onSDKReady() {
         Log.d("SDK", "Buddy SDK ready --------------");
+        Toast.makeText(this, "Buddy SDK Ready!", Toast.LENGTH_SHORT).show();
 
         // Transfer the touch information to BuddyCore in the background
         BuddySDK.UI.setViewAsFace(findViewById(R.id.view_face));
+
+        // Setup STT & TTS
+        BuddySTT.init(this, Locale.ENGLISH, Engine.GOOGLE, true);
+        BuddyTTS.init(getApplicationContext());
     }
+
+    /** Came from the STT example... not sure if needed? */
+    @Override
+    public void onResume() { super.onResume(); }
 
     // ====================================================================
     // Button Listeners
@@ -105,10 +131,15 @@ public class MainActivity extends BuddyActivity {
 
         // Start/Stop button
         buttonStartEnd.setOnClickListener(v -> {
-            if (!isRunning) { chat.connect(authToken, chatCallbacks); }
-            else            { chat.endChat();                         }
+            if (!isRunning) { chat.connect(authToken, chatCallbacks);           }
+            else            { chat.endChat(); BuddyTTS.stop(); BuddySTT.stop(); }
         });
 
+        // Toggle TTS button ---- using this to toggle both right now ----
+        buttonToggleTTS.setOnClickListener(v -> {
+            BuddyTTS.toggle();
+            BuddySTT.start(sttCallbacks);
+        });
     }
 
     // ====================================================================
