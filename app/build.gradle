@@ -18,8 +18,20 @@ android {
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    def apiUser = project.findProperty("apiUser") ?: ""
+    def apiPass = project.findProperty("apiPass") ?: ""
+    def testLocal = project.findProperty("testLocal") ?: ""
+
     buildTypes {
+        debug {
+            buildConfigField "String", "API_USER", "\"$apiUser\""
+            buildConfigField "String", "API_PASS", "\"$apiPass\""
+            buildConfigField "String", "TEST_LOCAL", "\"$testLocal\""
+        }
         release {
+            buildConfigField "String", "API_USER", "\"$apiUser\""
+            buildConfigField "String", "API_PASS", "\"$apiPass\""
+            buildConfigField "String", "TEST_LOCAL", "\"$testLocal\""
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
@@ -33,6 +45,7 @@ android {
     }
     buildFeatures {
         compose true
+        buildConfig true
     }
 }
 
@@ -55,4 +68,5 @@ dependencies {
     debugImplementation libs.androidx.ui.test.manifest
     implementation libs.androidx.appcompat
     implementation libs.buddysdk
+    implementation(libs.okhttp)
 }
