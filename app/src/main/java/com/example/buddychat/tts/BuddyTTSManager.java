@@ -65,4 +65,19 @@ public class BuddyTTSManager {
             BuddySDK.Speech.loadReadSpeaker(); // Attempt to re-load
         }
     }
+
+    public void stopSpeaking() {
+        if (BuddySDK.Speech.isSpeaking()) {
+            Log.i(TAG, "Stopping TTS...");
+            BuddySDK.Speech.stopSpeaking();
+        }
+    }
+
+    public boolean isSpeaking() {
+        return BuddySDK.Speech.isSpeaking();
+    }
+
+    public boolean isReadyToSpeak() {
+        return BuddySDK.Speech.isReadyToSpeak();
+    }
 }
