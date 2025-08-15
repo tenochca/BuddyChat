@@ -20,14 +20,6 @@
         android:text="Sign In"
         android:layout_marginBottom="8dp"/>
 
-    <Button
-        android:id="@+id/buttonConnectChat"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center_horizontal"
-        android:text="Connect to Chat"
-        android:layout_marginBottom="16dp"
-        android:enabled="false"/>
 
     <TextView
         android:id="@+id/textViewChatbotResponse"

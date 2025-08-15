@@ -121,11 +121,11 @@ public class MainActivity extends BuddyActivity implements
         };
 
         // Pass the new buttonConnectChat to ChatUiCallbacks
-        chatUiCallbacks = new ChatUiCallbacks(this, textViewChatbotResponse, buttonConnectChat, chatRunningStateConsumer);
+        chatUiCallbacks = new ChatUiCallbacks(this, textViewChatbotResponse, chatRunningStateConsumer);
 
         // --- Setup Listeners ---
         buttonSignIn.setOnClickListener(v -> signIn()); // Changed from handleSignInOrConnectChat
-        buttonConnectChat.setOnClickListener(v -> handleConnectOrDisconnectChat()); // New handler
+        //buttonConnectChat.setOnClickListener(v -> handleConnectOrDisconnectChat()); // New handler
         buttonToggleListen.setOnClickListener(v -> toggleListeningState());
         buttonPrepareEngine.setOnClickListener(v -> prepareAndInitializeEngine());
 
@@ -146,7 +146,7 @@ public class MainActivity extends BuddyActivity implements
         buttonToggleListen = findViewById(R.id.buttonToggleListen);
         buttonPrepareEngine = findViewById(R.id.buttonPrepareEngine);
         buttonSignIn = findViewById(R.id.buttonSignIn);
-        buttonConnectChat = findViewById(R.id.buttonConnectChat); // Initialize the new button
+        //buttonConnectChat = findViewById(R.id.buttonConnectChat); // Initialize the new button
         spinnerSttEngine = findViewById(R.id.spinnerSttEngine);
         spinnerLanguage = findViewById(R.id.spinnerLanguage);
         checkboxContinuousListen = findViewById(R.id.checkboxContinuousListen);
@@ -234,8 +234,10 @@ public class MainActivity extends BuddyActivity implements
             Log.i(TAG, "Sign-In Successful. Access Token: " + token);
             Toast.makeText(MainActivity.this, "Sign-In Successful!", Toast.LENGTH_SHORT).show();
             textViewStatus.setText("Status: Signed In. You can now connect to chat.");
-            // Do NOT auto-connect to chat here. User clicks buttonConnectChat.
             updateUIStates();
+            connectToChat();
+            textViewStatus.setText("Status: Connecting to chat...");
+            Log.i(TAG, "Connected to chat.");
         });
     }
 
@@ -251,19 +253,6 @@ public class MainActivity extends BuddyActivity implements
         });
     }
 
-    // --- Chat Connection Logic (New Handler for buttonConnectChat) ---
-    private void handleConnectOrDisconnectChat() {
-        if (!isSignedIn) {
-            Toast.makeText(this, "Please Sign In first.", Toast.LENGTH_SHORT).show();
-            return;
-        }
-        if (!isChatConnected) {
-            connectToChat();
-        } else {
-            disconnectFromChat();
-        }
-    }
-
     private void connectToChat() {
         if (accessToken == null || accessToken.isEmpty()) {
             Log.w(TAG, "ConnectToChat called but no token.");
@@ -271,7 +260,6 @@ public class MainActivity extends BuddyActivity implements
             return;
         }
         textViewStatus.setText("Status: Connecting to chat...");
-        buttonConnectChat.setEnabled(false); // Disable while attempting to connect
         chatSocketManager.connect(accessToken, chatUiCallbacks);
         // updateUIStates() will be called by the consumer when connection state changes
     }
@@ -423,15 +411,8 @@ public class MainActivity extends BuddyActivity implements
 
     // --- UI Update Logic ---
     private void updateUIStates() {
-
         // Sign In Button
         buttonSignIn.setEnabled(!isSignedIn); // Enabled if SDK ready AND not signed in
-        buttonSignIn.setText("Sign In"); // Text is static now
-
-        // Connect Chat Button
-        // ChatUiCallbacks will set its text to "End Chat" or "Start Chat" (from strings.xml)
-        // We only manage its enabled state here.
-        buttonConnectChat.setEnabled(isSignedIn);
 
         // STT Engine Preparation
         // Can only prepare if SDK ready, signed in, AND CHAT IS CONNECTED
