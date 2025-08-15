@@ -34,6 +34,9 @@ import com.example.buddychat.network.ws.ChatSocketManager;
 import com.example.buddychat.network.ws.ChatUiCallbacks;
 import com.example.buddychat.network.ws.ChatListener;
 
+// TTS imports
+import com.example.buddychat.tts.BuddyTTSManager;
+
 // JSON processing
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -84,6 +87,8 @@ public class MainActivity extends BuddyActivity implements
     private ChatUiCallbacks chatUiCallbacks;
     private boolean isChatConnected = false;
 
+    // --- TTS Manager ---
+    public BuddyTTSManager buddyTTSManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -91,6 +96,8 @@ public class MainActivity extends BuddyActivity implements
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main_activity);
         Log.d(TAG, "UI inflated");
+
+        buddyTTSManager = new BuddyTTSManager(getApplicationContext());
 
         initializeUI();
         checkAndRequestRecordAudioPermission();
@@ -114,7 +121,7 @@ public class MainActivity extends BuddyActivity implements
         };
 
         // Pass the new buttonConnectChat to ChatUiCallbacks
-        chatUiCallbacks = new ChatUiCallbacks(textViewChatbotResponse, buttonConnectChat, chatRunningStateConsumer);
+        chatUiCallbacks = new ChatUiCallbacks(this, textViewChatbotResponse, buttonConnectChat, chatRunningStateConsumer);
 
         // --- Setup Listeners ---
         buttonSignIn.setOnClickListener(v -> signIn()); // Changed from handleSignInOrConnectChat
@@ -192,7 +199,16 @@ public class MainActivity extends BuddyActivity implements
     public void onSDKReady() {
         Log.i(TAG, "Buddy SDK is Ready!");
         Toast.makeText(this, "Buddy SDK Ready!", Toast.LENGTH_SHORT).show();
-        sttService = new BuddySpeechToTextService(getApplicationContext().getAssets());
+        if (sttService == null) {
+            sttService = new BuddySpeechToTextService(getApplicationContext().getAssets());
+        }
+
+        Log.i(TAG, "Initializing Buddy TTS via manager...");
+        if (buddyTTSManager != null) {
+            buddyTTSManager.initializeTTS();
+        } else {
+            Log.w(TAG, "buddyTTSManager is null in onSDKReady. Cannot initialize TTS.");
+        }
         textViewStatus.setText("Status: Buddy SDK Ready. Please Sign In.");
         updateUIStates();
     }
@@ -383,16 +399,6 @@ public class MainActivity extends BuddyActivity implements
             updateUIStates();
         });
     }
-    // Add this if your SttListener interface and BuddySpeechToTextService can provide it
-    // It helps manage the isListening state more accurately.
-    // public void onSttListening() {
-    // runOnUiThread(() -> {
-    // Log.i(TAG, "STT is actively listening.");
-    // textViewStatus.setText("Status: Listening...");
-    // isListening = true;
-    // updateUIStates();
-    // });
-    // }
 
 
     @Override
@@ -466,6 +472,29 @@ public class MainActivity extends BuddyActivity implements
                 textViewStatus.setText("Status: Mic permission denied. STT disabled.");
             }
             updateUIStates();
+        }
+    }
+
+    // --- TTS Logic ---
+    public void processAndSpeakApiResponse(String textToSpeak) {
+        // This method now directly receives the text to speak, not the full JSON string.
+        Log.i(TAG, "Received text from ChatUiCallbacks to speak: " + textToSpeak);
+
+        if (textToSpeak == null || textToSpeak.trim().isEmpty()) {
+            Log.w(TAG, "processAndSpeakApiResponse called with empty or null text. Nothing to speak.");
+            runOnUiThread(() -> textViewChatbotResponse.append("\n[Bot: Received an empty response.]"));
+            return;
+        }
+
+        if (buddyTTSManager != null) {
+            Log.i(TAG, "Asking BuddyTTSManager to speak: '" + textToSpeak + "' with locale: " + selectedLocale.getDisplayLanguage());
+            buddyTTSManager.speak(textToSpeak, selectedLocale);
+        } else {
+            Log.e(TAG, "BuddyTTSManager is null in processAndSpeakApiResponse. Cannot speak.");
+            runOnUiThread(() -> {
+                Toast.makeText(MainActivity.this, "TTS Manager not available. Cannot speak.", Toast.LENGTH_SHORT).show();
+                textViewChatbotResponse.append("\n[Bot: TTS system error, cannot speak response.]");
+            });
         }
     }
 

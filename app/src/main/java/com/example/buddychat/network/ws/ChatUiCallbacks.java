@@ -1,5 +1,7 @@
 package com.example.buddychat.network.ws;
 
+// Keep existing imports
+import com.example.buddychat.MainActivity; // <<< ADD THIS IMPORT
 import com.example.buddychat.R;
 
 import android.util.Log;
@@ -26,10 +28,13 @@ public class ChatUiCallbacks implements ChatListener {
     // Handler to hop onto UI thread.
     private final Handler ui = new Handler(Looper.getMainLooper());
 
-    public ChatUiCallbacks(TextView statusView, Button   startEndBtn, Consumer<Boolean> runningStateSink) {
-        this.statusView        = statusView;
-        this.startEndBtn       = startEndBtn;
-        this.runningStateSink  = runningStateSink;
+    private final MainActivity mainActivity;
+
+    public ChatUiCallbacks(MainActivity mainActivity, TextView statusView, Button startEndBtn, Consumer<Boolean> runningStateSink) { // <<< MODIFY CONSTRUCTOR
+        this.mainActivity = mainActivity;
+        this.statusView = statusView;
+        this.startEndBtn = startEndBtn;
+        this.runningStateSink = runningStateSink;
     }
 
     // --------------------------------------------------------------------
@@ -43,24 +48,40 @@ public class ChatUiCallbacks implements ChatListener {
         });
     }
 
-    @Override public void onMessage(String raw) {
+    @Override public void onMessage(String raw) { // raw is the full JSON string
         try {
             JSONObject obj  = new JSONObject(raw);
             String type     = obj.optString("type", "");
-            if (!"llm_response".equals(type)) return;     // ignore other message kinds
 
-            final String body = obj.optString("data", "(empty)");
+            // Ensure we only process messages intended for display/speech
+            if (!"llm_response".equals(type)) {
+                Log.d(TAG, "Ignoring message of type: " + type);
+                return;
+            }
+
+            final String body = obj.optString("data", ""); // This is what we want to speak
             final String time = obj.optString("time", "");
 
-            // Hop to UI thread
+            // Update the UI TextView
             ui.post(() -> {
-                Log.d(TAG, String.format("%s: %s", time, body));
+                Log.d(TAG, String.format("LLM Response for UI [%s]: %s", time, body));
                 statusView.setText(String.format("%s \n %s", body, time));
+
+                // --- TTS Integration ---
+                // Call MainActivity to handle speaking the response.
+                // We pass the 'body' directly as that's the text to speak.
+                // If processAndSpeakApiResponse needed the full JSON, you'd pass 'raw'.
+                if (!body.trim().isEmpty()) {
+                    mainActivity.processAndSpeakApiResponse(body); // TODO CREATE AND CALL METHOD ON MAINACTIVITY
+                } else {
+                    Log.w(TAG, "LLM response data is empty, nothing to speak.");
+                }
             });
 
         } catch (JSONException e) {
+            Log.e(TAG, "Error parsing JSON in onMessage: " + e.getMessage() + " | Raw JSON: " + raw);
             ui.post(() -> Toast.makeText(
-                    startEndBtn.getContext(), "Bad JSON: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+                    startEndBtn.getContext(), "Bad JSON from server: " + e.getMessage(), Toast.LENGTH_SHORT).show());
         }
     }
 
