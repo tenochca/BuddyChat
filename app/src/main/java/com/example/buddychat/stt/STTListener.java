@@ -1,6 +1,15 @@
 package com.example.buddychat.stt;
 
-public interface STTListener {
-    void onText (String utterance, float confidence, String rule);
-    void onError(String err);
+public interface SttListener {
+    //called when speech is successfully recognized
+    void onSpeechResult(String utterance, float confidence);
+
+    void onError(String errorMessage);
+
+    //called when the STT engine is ready to listen
+    void onSttReady();
+
+    void onSttPaused();
+
+    void onSttStopped();
 }
