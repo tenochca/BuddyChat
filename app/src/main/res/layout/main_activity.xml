@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp"
+    tools:context=".MainActivity">
+
+    <Button
+        android:id="@+id/buttonSignIn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:text="Sign In"
+        android:layout_marginBottom="8dp"/>
+
+
+    <TextView
+        android:id="@+id/textViewChatbotResponse"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:hint="Chatbot response will appear here"
+        android:padding="8dp"
+        android:background="#e0e0e0"
+        android:minHeight="100dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="8dp"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="STT Engine:" />
+
+    <Spinner
+        android:id="@+id/spinnerSttEngine"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Language:" />
+
+    <Spinner
+        android:id="@+id/spinnerLanguage"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp" />
+
+    <Button
+        android:id="@+id/buttonPrepareEngine"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:text="Prepare Engine"
+        android:layout_marginBottom="8dp" />
+
+    <Button
+        android:id="@+id/buttonToggleListen"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Start Listening"
+        android:enabled="false"
+        android:layout_marginBottom="16dp" />
+
+    <TextView
+        android:id="@+id/textViewStatus"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Status: Waiting for Buddy SDK..."
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:paddingBottom="8dp" />
+
+    <TextView
+        android:id="@+id/textViewRecognizedText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:hint="Recognized text will appear here"
+        android:padding="8dp"
+        android:background="#f0f0f0"
+        android:minHeight="100dp" />
+
+    <CheckBox
+        android:id="@+id/checkboxContinuousListen"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Listen Continuously"
+        android:checked="false"
+        android:layout_marginTop="16dp" />
+
+</LinearLayout>
+    </ScrollView>

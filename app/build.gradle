@@ -18,8 +18,9 @@ android {
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
-    def apiUser = project.findProperty("apiUser") ?: ""
-    def apiPass = project.findProperty("apiPass") ?: ""
+    def apiUser   = project.findProperty("apiUser"  ) ?: ""
+    def apiPass   = project.findProperty("apiPass"  ) ?: ""
+    def testLocal = project.findProperty("testLocal") ?: ""
 
     buildTypes {
         debug {
@@ -31,6 +32,7 @@ android {
             buildConfigField "String", "API_USER",   "\"$apiUser\""
             buildConfigField "String", "API_PASS",   "\"$apiPass\""
             buildConfigField "String", "TEST_LOCAL", "\"$testlocal\""
+
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
@@ -70,4 +72,5 @@ dependencies {
     implementation libs.buddysdk
     implementation(libs.bundles.networking)  // libs.okhttp.core, libs.okhttp.logging
     implementation(libs.gson)
+    implementation(libs.okhttp) // --- from the merge, might have to remove
 }

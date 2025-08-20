@@ -1,5 +1,7 @@
 package com.example.buddychat.network.ws;
 
+// Keep existing imports
+import com.example.buddychat.MainActivity; // <<< ADD THIS IMPORT
 import com.example.buddychat.R;
 
 import android.util.Log;

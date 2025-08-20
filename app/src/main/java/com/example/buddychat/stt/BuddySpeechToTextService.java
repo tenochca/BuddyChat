@@ -1,4 +1,4 @@
-package com.example.buddychat;
+package com.example.buddychat.stt;
 import com.bfr.buddysdk.BuddySDK;
 import com.bfr.buddysdk.services.speech.STTTask;
 import com.bfr.buddy.speech.shared.ISTTCallback;
