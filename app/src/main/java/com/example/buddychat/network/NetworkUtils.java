@@ -30,8 +30,8 @@ public class NetworkUtils {
     private static final String BASE =
             "1".equals(BuildConfig.TEST_LOCAL)
                     ? "http://10.0.2.2:8000/api"            // local docker container
-                    //: "https://cognibot.org/api";         // cloud server
-                    : "https://sandbox.cognibot.org/api";   // cloud server
+                    : "https://cognibot.org/api";         // cloud server
+                    //: "https://sandbox.cognibot.org/api";   // cloud server
 
 
     // --------------------------------------------------------------------
@@ -130,7 +130,7 @@ public class NetworkUtils {
                 try (ResponseBody b = r.body()) {
                     if (!r.isSuccessful()) throw new IOException("HTTP " + r.code());
                     String raw = b.string();
-                    Log.d("HTTP", "PROFILE JSON = " + raw);
+                    Log.i("HTTP", "PROFILE JSON = " + raw);
 
                     Profile p = GSON.fromJson(raw, Profile.class);
                     cb.onSuccess(p);

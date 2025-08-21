@@ -65,7 +65,7 @@ public class ChatUiCallbacks implements ChatListener {
             ui.post(() -> {
                 // Log the message
                 Log.d(TAG, String.format("%s: %s", time, body));
-                statusView.setText(String.format("%s \n %s", body, time));
+                statusView.setText(String.format("Buddy: %s (%s)", body, time));
 
                 // Fire off text-to-speech for this message
                 BuddyTTS.speak(body);

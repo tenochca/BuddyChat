@@ -39,7 +39,7 @@ public class ChatSocketManager extends WebSocketListener {
         }
         // For cloud server connection
         else {
-             String host = "sandbox.cognibot.org"; // sandbox.cognibot.org | cognibot.org
+             String host = "cognibot.org"; // sandbox.cognibot.org | cognibot.org
              url = new HttpUrl.Builder().scheme("https").host(host).addPathSegments("ws/chat/")
                     .addQueryParameter("token",  accessToken)
                     .addQueryParameter("source", "buddyrobot")

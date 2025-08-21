@@ -37,10 +37,9 @@ public class STTCallbacks implements STTListener {
             utteranceCallback.sendString(utterance);
 
             /// Logging the message
-            String log = String.format("Utt: %s (conf: %f, rule: %s)", utterance, confidence, rule);
-            Log.d(TAG, log);
-            sttView.setText(log);
-            Toast.makeText(sttView.getContext(), "Speech recognized", Toast.LENGTH_SHORT).show();
+            Log.d(TAG, String.format("Utt: %s (conf: %f, rule: %s)", utterance, confidence, rule));
+            sttView.setText(String.format("User (%.3f): %s", (confidence/1000), utterance));
+            // Toast.makeText(sttView.getContext(), "Speech recognized", Toast.LENGTH_SHORT).show();
         });
     }
 

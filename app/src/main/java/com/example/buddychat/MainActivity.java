@@ -35,6 +35,8 @@ public class MainActivity extends BuddyActivity {
     // --------------------------------------------------------------------
     // Persistent variables
     // --------------------------------------------------------------------
+    private String TAG = "BuddyChatMain";
+
     /// UI References
     private TextView textUserInfo;
     private TextView userView;
@@ -91,8 +93,10 @@ public class MainActivity extends BuddyActivity {
     }
 
     /** Came from the STT example... not sure if needed? */
-    @Override
-    public void onResume() { super.onResume(); }
+    @Override public void onPause  () { super.onPause ();  Log.i(TAG, "onPause"  ); }
+    @Override public void onResume () { super.onResume();  Log.i(TAG, "onResume" ); }
+    @Override public void onDestroy() { super.onDestroy(); Log.i(TAG, "onDestroy"); }
+
 
     // ====================================================================
     // UI Elements
@@ -122,6 +126,7 @@ public class MainActivity extends BuddyActivity {
     // ====================================================================
     // Handle API requests for logging in
     // ====================================================================
+    // TODO: This probably should be put into a separate file
     /** Adds some stuff to the UI (username, etc), and sets the auth token. */
     private void doLoginAndProfile() {
         /// Test the API
