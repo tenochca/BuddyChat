@@ -2,7 +2,6 @@ package com.example.buddychat;
 
 import android.os.Bundle;
 import android.util.Log;
-import androidx.core.util.Consumer;
 import android.widget.TextView;
 import android.widget.Button;
 import android.widget.Toast;
@@ -36,17 +35,16 @@ public class MainActivity extends BuddyActivity {
     // --------------------------------------------------------------------
     // Persistent variables
     // --------------------------------------------------------------------
-    // UI References
+    /// UI References
     private TextView textUserInfo;
     private TextView textStatus;
     private TextView sttView;
 
     private Button   buttonHello;
-    private Button   buttonLogin;
     private Button   buttonStartEnd;
     private Button   buttonToggleTTS;
 
-    // WebSocket related
+    /// WebSocket related
     private volatile String            authToken;
     private          boolean           isRunning = false;
     private final    ChatSocketManager chat      = new ChatSocketManager();
@@ -58,39 +56,29 @@ public class MainActivity extends BuddyActivity {
     // ====================================================================
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        // Setup the app & layout
+        /// Setup the app & layout
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         Log.d("TEST", "App running");
 
-        // --------------------------------------------------------------------
-        // Get each UI element (not sure if this is the best way to do this)
-        // --------------------------------------------------------------------
-        textUserInfo   = findViewById(R.id.textUserInfo);
-        textStatus     = findViewById(R.id.textStatus  );
-        sttView        = findViewById(R.id.sttView     );
+        /// Setup UI
+        initializeUI(); wireButtons();
 
-        // Button setup
-        buttonHello     = findViewById(R.id.buttonHello    );
-        buttonLogin     = findViewById(R.id.buttonLogin    );
-        buttonStartEnd  = findViewById(R.id.buttonStartEnd );
-        buttonToggleTTS = findViewById(R.id.buttonToggleTTS);
-        wireButtons();
+        /// WebSocket callback object
+        chatCallbacks = new ChatUiCallbacks(textStatus, buttonStartEnd, running -> isRunning = running);
 
-        // WebSocket callback object
-        chatCallbacks = new ChatUiCallbacks(textStatus, buttonStartEnd, (Consumer<Boolean>) running -> isRunning = running);
-
-        // STT callback object (we can pass it stuff here, like the textView)
+        /// STT callback object (we can pass it stuff here, like the textView)
         sttCallbacks = new STTCallbacks(sttView, chat::sendString);
 
-        // Test the API
-        NetworkUtils.pingHealth();
+        /// Login + set tokens
+        Log.d("API", "Logging in on app startup...");
+        textStatus.setText(R.string.logging_in);
+        doLoginAndProfile();
     }
 
     // ====================================================================
     // Called when the BuddyRobot SDK is ready
     // ====================================================================
-    // They also have button hookup in this function, not in onCreate()...
     @Override
     public void onSDKReady() {
         Log.d("SDK", "Buddy SDK ready --------------");
@@ -110,46 +98,53 @@ public class MainActivity extends BuddyActivity {
     public void onResume() { super.onResume(); }
 
     // ====================================================================
-    // Button Listeners
+    // UI Elements
     // ====================================================================
+    /** Initialize UI element references */
+    private void initializeUI() {
+        textUserInfo   = findViewById(R.id.textUserInfo);
+        textStatus     = findViewById(R.id.textStatus  );
+        sttView        = findViewById(R.id.sttView     );
+
+        // Button setup
+        buttonHello     = findViewById(R.id.buttonHello    );
+        buttonStartEnd  = findViewById(R.id.buttonStartEnd );
+        buttonToggleTTS = findViewById(R.id.buttonToggleTTS);
+    }
+
+    /** Set button listeners */
     private void wireButtons() {
-        // Hello button
-        buttonHello.setOnClickListener(view -> {
-            String testMessage = "{\"type\":\"transcription\",\"data\":\"Hello, how are you doing today?\"}";
-            Log.d("WS", String.format("Sending: %s", testMessage));
-            chat.sendJson(testMessage);
-        });
-
-        // Login button
-        buttonLogin.setOnClickListener(view -> {
-            Log.d("API", "Login button clicked, signing in!");
-            NetworkUtils.getTokens();
-            textStatus.setText("Signing in...");
-            doLoginAndProfile();
-        });
-
-        // Start/Stop button
+        /// Hello button
+        buttonHello.setOnClickListener(view -> {chat.sendString("Hello, how are you doing today?");});
+        
+        /// Start/Stop button
         buttonStartEnd.setOnClickListener(v -> {
             if (!isRunning) { chat.connect(authToken, chatCallbacks);           }
             else            { chat.endChat(); BuddyTTS.stop(); BuddySTT.stop(); }
         });
 
-        // Toggle TTS button ---- using this to toggle both right now ----
+        /// Toggle TTS button ---- using this to toggle both right now ----
         buttonToggleTTS.setOnClickListener(v -> {
             BuddyTTS.toggle();
             BuddySTT.start(sttCallbacks);
         });
     }
 
+
+
     // ====================================================================
     // Handle API requests for logging in
     // ====================================================================
-    // Adds some stuff to the UI (username, etc), and sets the auth token.
+    /** Adds some stuff to the UI (username, etc), and sets the auth token. */
     private void doLoginAndProfile() {
+        /// Test the API
+        NetworkUtils.pingHealth();
+
+        /// Login
         NetworkUtils.login(new NetworkUtils.AuthCallback() {
             @Override public void onSuccess(String token) {
                 authToken = token;
-                runOnUiThread(() -> textStatus.setText("Token ok, fetching profile..."));
+                runOnUiThread(() -> textStatus.setText(R.string.get_profile));
 
                 NetworkUtils.fetchProfile(token, new NetworkUtils.ProfileCallback() {
                     @Override public void onSuccess(Profile p) {

@@ -1,5 +1,9 @@
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <string name="app_name"  > BuddyChat  </string>
     <string name="start_chat"> Start Chat </string>
     <string name="end_chat"  > End Chat   </string>
+
+    <string name="logging_in"  tools:ignore="TypographyEllipsis"> Signing in...                 </string>
+    <string name="get_profile" tools:ignore="TypographyEllipsis"> Token OK, fetching profile... </string>
+
 </resources>

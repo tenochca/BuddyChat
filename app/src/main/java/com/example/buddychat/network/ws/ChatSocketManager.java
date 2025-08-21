@@ -11,8 +11,8 @@ import com.example.buddychat.network.NetworkUtils;
 // ====================================================================
 // WebSocket Manager
 // ====================================================================
-// Connect, disconnect, send...
-// Refers to a separate ChatListener utility for handling messages
+/// Connect, disconnect, send...
+/// Refers to a separate ChatListener utility for handling messages
 public class ChatSocketManager extends WebSocketListener {
     private static final String TAG  = "ChatWS";
     private static final OkHttpClient CLIENT = NetworkUtils.CLIENT;  // reused
@@ -61,6 +61,7 @@ public class ChatSocketManager extends WebSocketListener {
     /** Send JSON the WebSocket (called from the main thread) */
     public void sendJson(String json) { if (socket != null) socket.send(json); }
 
+    /** End the chat */
     public void endChat() {
         if (socket != null) {
             socket.send(String.format("{\"type\":\"end_chat\", \"data\":%s}", System.currentTimeMillis()));
