@@ -74,9 +74,12 @@ public class BuddySTT {
     // --------------------------------------------------------------------
     /** Start listening (no-op on devices without Buddy speech service). */
     public static void start(@NonNull STTListener cb) {
-        if (!available) { Log.d(TAG, "STT ignored (not available)"); return; }
+        if (!available         ) { Log.d(TAG, "STT ignored (not available)"); return; }
+        if (!hasMicPermission()) { requestMicPermission(); }
 
-        if (!hasMicPermission()) requestMicPermission();
+        /// Start listening
+        Log.w(TAG, "STT started");
+
         task.start(continuous, new ISTTCallback.Stub() {
             @Override public void onSuccess(STTResultsData res) {
                 if (!res.getResults().isEmpty()) {

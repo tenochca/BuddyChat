@@ -78,12 +78,10 @@ public class MainActivity extends BuddyActivity {
         wireButtons();
 
         // WebSocket callback object
-        chatCallbacks = new ChatUiCallbacks(textStatus, buttonStartEnd,
-                (Consumer<Boolean>) running -> isRunning = running  // lambda target
-        );
+        chatCallbacks = new ChatUiCallbacks(textStatus, buttonStartEnd, (Consumer<Boolean>) running -> isRunning = running);
 
         // STT callback object (we can pass it stuff here, like the textView)
-        sttCallbacks = new STTCallbacks(sttView);
+        sttCallbacks = new STTCallbacks(sttView, chat::sendString);
 
         // Test the API
         NetworkUtils.pingHealth();
@@ -102,8 +100,9 @@ public class MainActivity extends BuddyActivity {
         BuddySDK.UI.setViewAsFace(findViewById(R.id.view_face));
 
         // Setup STT & TTS
-        BuddySTT.init(this, Locale.ENGLISH, Engine.GOOGLE, true);
         BuddyTTS.init(getApplicationContext());
+        BuddySTT.init(this, Locale.ENGLISH, Engine.GOOGLE, true);
+
     }
 
     /** Came from the STT example... not sure if needed? */

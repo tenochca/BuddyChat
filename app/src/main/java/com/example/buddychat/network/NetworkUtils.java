@@ -90,9 +90,7 @@ public class NetworkUtils {
 
         String endpoint = String.format("%s/token/", BASE);
         RequestBody body = RequestBody.create(GSON.toJson(payload), MediaType.get("application/json"));
-        Request     req  = new Request.Builder()
-                .url(endpoint)
-                .post(body).build();
+        Request     req  = new Request.Builder().url(endpoint).post(body).build();
 
         // Logging
         Log.d("LOGIN", String.format("Calling %s with username: %s, password: %s", endpoint, BuildConfig.API_USER, BuildConfig.API_PASS));
@@ -131,7 +129,6 @@ public class NetworkUtils {
             @Override public void onResponse(@NonNull Call c, @NonNull Response r) {
                 try (ResponseBody b = r.body()) {
                     if (!r.isSuccessful()) throw new IOException("HTTP " + r.code());
-                    // Read the response once
                     String raw = b.string();
                     Log.d("HTTP", "PROFILE JSON = " + raw);
 

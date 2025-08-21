@@ -52,7 +52,13 @@ public class ChatSocketManager extends WebSocketListener {
         socket = CLIENT.newWebSocket(req, this);   // async open
     }
 
-    // Called from UI thread
+    /** Send a string the WebSocket (called from the main thread) (auto-format as JSON) */
+    public void sendString(String text) {
+        String stringJson = String.format("{\"type\": \"transcription\", \"data\": \"%s\"}", text);
+        sendJson(stringJson);
+    }
+
+    /** Send JSON the WebSocket (called from the main thread) */
     public void sendJson(String json) { if (socket != null) socket.send(json); }
 
     public void endChat() {
