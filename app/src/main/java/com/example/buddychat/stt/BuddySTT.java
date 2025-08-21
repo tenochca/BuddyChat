@@ -91,9 +91,14 @@ public class BuddySTT {
         });
     }
 
-    /** Pause / resume helpers. */
-    public static void pause() { if (available) task.pause(); }
-    public static void stop () { if (available) task.stop (); }
+    /** Stop helper (currently never used) */
+    public static void stop  () { if (available) task.stop (); }
+
+    /** Start/Pause Wrapper */
+    public static void toggle (@NonNull STTListener cb) {
+        if (task.isRunning()) { task.pause(); return; }
+        start(cb);
+    }
 
     // --------------------------------------------------------------------
     // Permission Helpers

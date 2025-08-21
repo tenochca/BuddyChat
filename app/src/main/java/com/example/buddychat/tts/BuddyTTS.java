@@ -6,7 +6,6 @@ import android.util.Log;
 import com.bfr.buddy.speech.shared.ITTSCallback;
 import com.bfr.buddysdk.BuddySDK;
 
-
 // ====================================================================
 // Wrapper class around BuddySDK.Speech for Text-to-Speech
 // ====================================================================
@@ -21,8 +20,10 @@ public class BuddyTTS {
     // --------------------------------------------------------------------
     // Initialization & Utility
     // --------------------------------------------------------------------
-    /** Called once in MainActivity.onCreate */
-    public static void init(Context ctx) {
+    /** Called once in MainActivity.onCreate (ctx would be used if I wanted Toast) */
+    public static void init(Context ctx) {start();}
+
+    public static void start() {
         if (loaded) return;
         BuddySDK.Speech.loadReadSpeaker();          // async, but cheap to call again
         BuddySDK.Speech.setSpeakerVoice("kate");    // English voice
@@ -32,9 +33,10 @@ public class BuddyTTS {
 
     /** Stop current utterance if there is one */
     public static void toggle() {
+        if (enabled && BuddySDK.Speech.isSpeaking()) { stop(); }
         enabled = !enabled;
-        String logMessage = enabled ? "TTS Enabled." : "TTS Disabled";
-        Log.w(TAG, logMessage);
+        Log.w(TAG, enabled ? "TTS Enabled." : "TTS Disabled");
+        if (enabled) {speak("Hello, how are you today?");}
     }
 
     /** Check if the class is present (it won't be on simulators, only on the BuddyRobot itself) */
@@ -75,5 +77,4 @@ public class BuddyTTS {
     public static void setPitch (int pitch ) { BuddySDK.Speech.setSpeakerPitch (pitch ); }
     public static void setSpeed (int speed ) { BuddySDK.Speech.setSpeakerSpeed (speed ); }
     public static void setVolume(int volume) { BuddySDK.Speech.setSpeakerVolume(volume); }
-
 }

@@ -37,12 +37,9 @@ public class MainActivity extends BuddyActivity {
     // --------------------------------------------------------------------
     /// UI References
     private TextView textUserInfo;
-    private TextView textStatus;
-    private TextView sttView;
-
-    private Button   buttonHello;
+    private TextView userView;
+    private TextView botView;
     private Button   buttonStartEnd;
-    private Button   buttonToggleTTS;
 
     /// WebSocket related
     private volatile String            authToken;
@@ -54,6 +51,7 @@ public class MainActivity extends BuddyActivity {
     // ====================================================================
     // Startup code
     // ====================================================================
+    // I don't know if maybe all of this should just go into the onSDKReady() function...
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         /// Setup the app & layout
@@ -65,14 +63,14 @@ public class MainActivity extends BuddyActivity {
         initializeUI(); wireButtons();
 
         /// WebSocket callback object
-        chatCallbacks = new ChatUiCallbacks(textStatus, buttonStartEnd, running -> isRunning = running);
+        chatCallbacks = new ChatUiCallbacks(botView, buttonStartEnd, running -> isRunning = running);
 
         /// STT callback object (we can pass it stuff here, like the textView)
-        sttCallbacks = new STTCallbacks(sttView, chat::sendString);
+        sttCallbacks = new STTCallbacks(userView, chat::sendString);
 
         /// Login + set tokens
         Log.d("API", "Logging in on app startup...");
-        textStatus.setText(R.string.logging_in);
+        textUserInfo.setText(R.string.logging_in);
         doLoginAndProfile();
     }
 
@@ -90,7 +88,6 @@ public class MainActivity extends BuddyActivity {
         // Setup STT & TTS
         BuddyTTS.init(getApplicationContext());
         BuddySTT.init(this, Locale.ENGLISH, Engine.GOOGLE, true);
-
     }
 
     /** Came from the STT example... not sure if needed? */
@@ -102,35 +99,25 @@ public class MainActivity extends BuddyActivity {
     // ====================================================================
     /** Initialize UI element references */
     private void initializeUI() {
-        textUserInfo   = findViewById(R.id.textUserInfo);
-        textStatus     = findViewById(R.id.textStatus  );
-        sttView        = findViewById(R.id.sttView     );
-
-        // Button setup
-        buttonHello     = findViewById(R.id.buttonHello    );
-        buttonStartEnd  = findViewById(R.id.buttonStartEnd );
-        buttonToggleTTS = findViewById(R.id.buttonToggleTTS);
+        textUserInfo   = findViewById(R.id.textUserInfo  );
+        userView       = findViewById(R.id.userView      );
+        botView        = findViewById(R.id.botView       );
+        buttonStartEnd = findViewById(R.id.buttonStartEnd);
     }
 
     /** Set button listeners */
     private void wireButtons() {
-        /// Hello button
-        buttonHello.setOnClickListener(view -> {chat.sendString("Hello, how are you doing today?");});
-        
-        /// Start/Stop button
         buttonStartEnd.setOnClickListener(v -> {
-            if (!isRunning) { chat.connect(authToken, chatCallbacks);           }
-            else            { chat.endChat(); BuddyTTS.stop(); BuddySTT.stop(); }
-        });
+            if (!isRunning) { chat.connect(authToken, chatCallbacks); }
+            else            { chat.endChat();                         }
+            BuddyTTS.toggle(); BuddySTT.toggle(sttCallbacks);
 
-        /// Toggle TTS button ---- using this to toggle both right now ----
-        buttonToggleTTS.setOnClickListener(v -> {
-            BuddyTTS.toggle();
-            BuddySTT.start(sttCallbacks);
+            // Logging
+            String logMsg = "Chat connected; STT & TTS started.";
+            if (!isRunning) {logMsg = "Chat ended; STT & TTS paused.";}
+            Toast.makeText(this, logMsg, Toast.LENGTH_SHORT).show();
         });
     }
-
-
 
     // ====================================================================
     // Handle API requests for logging in
@@ -144,39 +131,25 @@ public class MainActivity extends BuddyActivity {
         NetworkUtils.login(new NetworkUtils.AuthCallback() {
             @Override public void onSuccess(String token) {
                 authToken = token;
-                runOnUiThread(() -> textStatus.setText(R.string.get_profile));
+                runOnUiThread(() -> botView.setText(R.string.get_profile));
 
                 NetworkUtils.fetchProfile(token, new NetworkUtils.ProfileCallback() {
                     @Override public void onSuccess(Profile p) {
                         runOnUiThread(() -> textUserInfo.setText(String.format("%s %s | %s", p.plwd.first_name, p.plwd.last_name, p.plwd.username)));
-                        runOnUiThread(() -> textStatus  .setText(String.format("Welcome %s", p.plwd.username)));
+                        runOnUiThread(() -> botView     .setText(String.format("Welcome %s", p.plwd.username)));
                         runOnUiThread(() -> Toast.makeText(MainActivity.this, String.format("Welcome %s", p.plwd.username), Toast.LENGTH_SHORT).show());
                     }
-                    @Override public void onError(Throwable t) {runOnUiThread(() -> textStatus.setText(String.format("Profile fail: %s", t.getMessage())));}
+                    @Override public void onError(Throwable t) {runOnUiThread(() -> botView.setText(String.format("Profile fail: %s", t.getMessage())));}
                 });
             }
 
             @Override public void onError(Throwable t) {
                 Log.d("LOGIN", String.format("Login failed: %s", t.getMessage()));
-                runOnUiThread(() -> textStatus.setText(String.format("Login failed: %s", t.getMessage())));
+                runOnUiThread(() -> botView.setText(String.format("Login failed: %s", t.getMessage())));
             }
         });
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

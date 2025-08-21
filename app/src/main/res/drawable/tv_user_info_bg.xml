@@ -1,13 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <shape xmlns:android="http://schemas.android.com/apk/res/android">
     <!-- fill color -->
-    <solid android:color="#eaecee" />
+    <solid android:color="@color/black" />
+
+    <solid android:shadowColor="@color/black"    />
+    <solid android:shadowDx="2"    />
+    <solid android:shadowDy="2"    />
+    <solid android:shadowRadius="8"    />
 
     <!-- 2-dp border -->
     <stroke
-        android:width="2dp"
+        android:width="0dp"
         android:color="#17202a" />
 
     <!-- rounded corners -->
-    <corners android:radius="0dp" />
+    <corners android:radius="999dp" />
 </shape>
