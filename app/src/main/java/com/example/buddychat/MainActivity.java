@@ -35,7 +35,7 @@ public class MainActivity extends BuddyActivity {
     // --------------------------------------------------------------------
     // Persistent variables
     // --------------------------------------------------------------------
-    private String TAG = "BuddyChatMain";
+    private final String TAG = "BuddyChatMain";
 
     /// UI References
     private TextView textUserInfo;
@@ -81,7 +81,7 @@ public class MainActivity extends BuddyActivity {
     // ====================================================================
     @Override
     public void onSDKReady() {
-        Log.d("SDK", "Buddy SDK ready --------------");
+        Log.i("SDK", "-------------- Buddy SDK ready --------------");
         Toast.makeText(this, "Buddy SDK Ready!", Toast.LENGTH_SHORT).show();
 
         // Transfer the touch information to BuddyCore in the background
@@ -118,8 +118,8 @@ public class MainActivity extends BuddyActivity {
 
             // Logging
             String logMsg = "Chat connected; STT & TTS started.";
-            if (!isRunning) {logMsg = "Chat ended; STT & TTS paused.";}
-            Toast.makeText(this, logMsg, Toast.LENGTH_SHORT).show();
+            if (!isRunning) { logMsg = "Chat ended; STT & TTS paused."; }
+            Toast.makeText(this, logMsg, Toast.LENGTH_LONG).show();
         });
     }
 
@@ -142,7 +142,7 @@ public class MainActivity extends BuddyActivity {
                     @Override public void onSuccess(Profile p) {
                         runOnUiThread(() -> textUserInfo.setText(String.format("%s %s | %s", p.plwd.first_name, p.plwd.last_name, p.plwd.username)));
                         runOnUiThread(() -> botView     .setText(String.format("Welcome %s", p.plwd.username)));
-                        runOnUiThread(() -> Toast.makeText(MainActivity.this, String.format("Welcome %s", p.plwd.username), Toast.LENGTH_SHORT).show());
+                        runOnUiThread(() -> Toast.makeText(MainActivity.this, String.format("Welcome %s", p.plwd.username), Toast.LENGTH_LONG).show());
                     }
                     @Override public void onError(Throwable t) {runOnUiThread(() -> botView.setText(String.format("Profile fail: %s", t.getMessage())));}
                 });
