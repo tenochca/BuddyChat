@@ -89,7 +89,7 @@ public class MainActivity extends BuddyActivity {
 
         // Setup STT & TTS
         BuddyTTS.init(getApplicationContext());
-        BuddySTT.init(this, Locale.ENGLISH, Engine.GOOGLE, true);
+        BuddySTT.init(this, Locale.ENGLISH, Engine.CERENCE_FREE, true);
     }
 
     /** Came from the STT example... not sure if needed? */
