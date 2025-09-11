@@ -93,8 +93,8 @@ public class MainActivity extends BuddyActivity {
     }
 
     /** Came from the STT example... not sure if needed? */
-    @Override public void onPause  () { super.onPause ();  Log.i(TAG, "onPause"  ); }
-    @Override public void onResume () { super.onResume();  Log.i(TAG, "onResume" ); }
+    @Override public void onPause  () { super.onPause  (); Log.i(TAG, "onPause"  ); }
+    @Override public void onResume () { super.onResume (); Log.i(TAG, "onResume" ); }
     @Override public void onDestroy() { super.onDestroy(); Log.i(TAG, "onDestroy"); }
 
 
