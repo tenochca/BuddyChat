@@ -18,6 +18,10 @@ import com.example.buddychat.network.model.Profile;
 import com.example.buddychat.network.ws.ChatSocketManager;
 import com.example.buddychat.network.ws.ChatUiCallbacks;
 
+// Buddy Features
+import com.example.buddychat.utils.AudioTracking;
+import com.example.buddychat.utils.RotateBody;
+
 // BuddySDK.Speech wrappers
 import com.example.buddychat.stt.STTCallbacks;
 import com.example.buddychat.tts.BuddyTTS;
@@ -59,7 +63,7 @@ public class MainActivity extends BuddyActivity {
         /// Setup the app & layout
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        Log.d("TEST", "App running");
+        Log.i("TEST", "-------------- App running --------------");
 
         /// Setup UI
         initializeUI(); wireButtons();
@@ -90,12 +94,21 @@ public class MainActivity extends BuddyActivity {
         // Setup STT & TTS
         BuddyTTS.init(getApplicationContext());
         BuddySTT.init(this, Locale.ENGLISH, Engine.CERENCE_FREE, true);
+
+        // Setup AudioTracking
+        AudioTracking.setupSensors();
+        AudioTracking.toggleTracking(false);
     }
 
-    /** Came from the STT example... not sure if needed? */
+    // --------------------------------------------------------------------
+    // App Behavior
+    // --------------------------------------------------------------------
+    // The wheels example project had onStop and onDestroy disable the wheels...
+    // I'm doing the emergency stop here too. That function disables the wheels at the end.
     @Override public void onPause  () { super.onPause  (); Log.i(TAG, "onPause"  ); }
     @Override public void onResume () { super.onResume (); Log.i(TAG, "onResume" ); }
-    @Override public void onDestroy() { super.onDestroy(); Log.i(TAG, "onDestroy"); }
+    @Override public void onStop   () { super.onStop   (); Log.i(TAG, "onStop"   ); RotateBody.StopMotors(); }
+    @Override public void onDestroy() { super.onDestroy(); Log.i(TAG, "onDestroy"); RotateBody.StopMotors(); }
 
 
     // ====================================================================
