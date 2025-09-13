@@ -97,7 +97,6 @@ public class MainActivity extends BuddyActivity {
 
         // Setup AudioTracking
         AudioTracking.setupSensors();
-        AudioTracking.toggleTracking(false);
     }
 
     // --------------------------------------------------------------------
@@ -140,6 +139,7 @@ public class MainActivity extends BuddyActivity {
     // Handle API requests for logging in
     // ====================================================================
     // TODO: This probably should be put into a separate file
+    // ToDo: Logging messages for login success should be better
     /** Adds some stuff to the UI (username, etc), and sets the auth token. */
     private void doLoginAndProfile() {
         /// Test the API
