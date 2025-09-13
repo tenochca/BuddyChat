@@ -16,12 +16,15 @@ import org.json.JSONException;
 // Text-To-Speech wrapper class
 import com.example.buddychat.tts.BuddyTTS;
 
+// Emotion Response Handling
+import com.example.buddychat.utils.Emotions;
+
 // ====================================================================
 // Handles the WebSocket responses
 // ====================================================================
 // UI updates, logs, start/end button
 public class ChatUiCallbacks implements ChatListener {
-    private static final String TAG  = "LISTENER";
+    private static final String TAG  = "DPU_ChatListener";
 
     // UI references that will be modified
     private final TextView statusView;
@@ -53,23 +56,12 @@ public class ChatUiCallbacks implements ChatListener {
 
     @Override public void onMessage(String raw) {
         try {
-            // Process the data we received
+            // Process the data we received & act accordingly
             JSONObject obj  = new JSONObject(raw);
             String type     = obj.optString("type", "");
-            if (!"llm_response".equals(type)) return;     // ignore other message kinds
 
-            final String body = obj.optString("data", "(empty)");
-            final String time = obj.optString("time", "");
-
-            // Hop to UI thread to do actions
-            ui.post(() -> {
-                // Log the message
-                Log.d(TAG, String.format("%s: %s", time, body));
-                statusView.setText(String.format("Buddy: %s (%s)", body, time));
-
-                // Fire off text-to-speech for this message
-                BuddyTTS.speak(body);
-            });
+            if      ("llm_response".equals(type)) { onLLMResponse(obj); } // Received LLM response
+            else if ("affect"      .equals(type)) { onAffect     (obj); } // Received emotion data
 
         } catch (JSONException e) {
             ui.post(() -> Toast.makeText(
@@ -93,4 +85,32 @@ public class ChatUiCallbacks implements ChatListener {
             Log.d(TAG, wsError);
         });
     }
+
+    // --------------------------------------------------------------------
+    // Handle different types of WS messages
+    // --------------------------------------------------------------------
+    // For now just "llm_response" & "affect"
+    /** Handle "llm_response" data from the backend (an utterance from the LLM). */
+    private void onLLMResponse(JSONObject obj) {
+        final String body = obj.optString("data", "(empty)");
+        final String time = obj.optString("time", "");
+
+        // Hop to UI thread to do actions
+        ui.post(() -> {
+            // Log the message & display it on the screen
+            Log.d(TAG, String.format("%s: %s", time, body));
+            statusView.setText(String.format("Buddy: %s (%s)", body, time));
+
+            // Fire off text-to-speech for this message
+            BuddyTTS.speak(body);
+        });
+    }
+
+    /** Handle "affect" data from the backend (valence+arousal emotion values for the face). */
+    private static void onAffect(JSONObject obj) {
+        final float valence = (float) obj.optDouble("valence", 0.5);
+        final float arousal = (float) obj.optDouble("arousal", 0.5);
+        Emotions.setPositivityEnergy(valence, arousal);
+    }
+
 }
