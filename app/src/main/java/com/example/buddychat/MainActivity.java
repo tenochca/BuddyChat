@@ -112,12 +112,12 @@ public class MainActivity extends BuddyActivity {
     @Override public void onPause  () { super.onPause  (); Log.i(TAG, String.format("%s onPause",  TAG)); }
     @Override public void onResume () { super.onResume (); Log.i(TAG, String.format("%s onResume", TAG)); }
     @Override public void onStop   () {
-        super.onStop   (); Log.i(TAG, String.format("%s onStop", TAG));
+        super.onStop   (); Log.i(TAG, String.format("%s <===== onStop =====>", TAG));
         RotateBody.StopMotors();
         HeadMotors.toggleMotors(false);
     }
     @Override public void onDestroy() {
-        super.onDestroy(); Log.i(TAG, String.format("%s onDestroy", TAG));
+        super.onDestroy(); Log.i(TAG, String.format("%s <===== onDestroy =====>", TAG));
         RotateBody.StopMotors();
         HeadMotors.toggleMotors(false);
     }

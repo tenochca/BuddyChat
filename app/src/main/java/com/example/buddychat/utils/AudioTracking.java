@@ -5,6 +5,10 @@ import android.os.Looper;
 import android.os.RemoteException;
 import android.util.Log;
 
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.ArrayList;
+import java.util.List;
+
 // BuddySDK imports
 import com.bfr.buddy.usb.shared.IUsbAidlCbListener;
 import com.bfr.buddy.usb.shared.IUsbCommadRsp;
@@ -36,6 +40,34 @@ public class AudioTracking {
     // Microphone utility
     static float AmbientNoise  = 0; // Sound volume in Decibels
     static float LocationAngle = 0; // Degree location of the sound
+
+    // --------------------------------------------------------------------
+    // Queue of recent values for the LocationAngle
+    // --------------------------------------------------------------------
+    private static final int N = 20;
+    private static final ArrayBlockingQueue<Float> angleQueue = new ArrayBlockingQueue<>(N);
+
+    // Queue methods
+    static void         pushAngle(float locationAngle) {if (!angleQueue.offer(locationAngle)) { angleQueue.poll(); angleQueue.offer(locationAngle); }}
+    static List<Float>  recentAngles() { return new ArrayList<>(angleQueue); } // snapshot copy
+    public static float averageAngle() {
+        // Make a snapshot to avoid iterating while it changes
+        Object[] snap = angleQueue.toArray();
+        if (snap.length == 0) return 0f; // Return 0 if the queue is empty
+
+        // Iterate through to get the average
+        double sum = 0;
+        for (Object o : snap) sum += (Float) o;
+        return (float)(sum / snap.length);
+    }
+
+    // Empty the queue
+    static void clearAngles() { angleQueue.clear(); }
+    static List<Float> drainAngles() {
+        List<Float> angleList = recentAngles();
+        clearAngles();
+        return angleList;
+    }
 
     // --------------------------------------------------------------------
     // Setup Sensors
@@ -99,6 +131,7 @@ public class AudioTracking {
     // For now, we are just going to do logging
     private static void processAudioData(float ambientNoise, float locationAngle) {
         if (locationAngle == -100) { return; } // -100 locationAngle is the equivalent of Null
+        pushAngle(locationAngle);
 
         // Check the change in angle
         float angleChange = Math.abs(locationAngle - LocationAngle);

@@ -4,9 +4,11 @@ import android.content.Context;
 import android.util.Log;
 
 import com.bfr.buddy.speech.shared.ITTSCallback;
+import com.bfr.buddy.ui.shared.FacialExpression;
 import com.bfr.buddysdk.BuddySDK;
 
 import com.example.buddychat.utils.AudioTracking;
+import com.example.buddychat.utils.Emotions;
 
 // ====================================================================
 // Wrapper class around BuddySDK.Speech for Text-to-Speech
@@ -37,7 +39,7 @@ public class BuddyTTS {
         if (enabled && BuddySDK.Speech.isSpeaking()) { stop(); }
         enabled = !enabled;
         Log.w(TAG, enabled ? "TTS Enabled." : "TTS Disabled");
-        if (enabled) {speak("Hello, how are you today?");}
+        if (enabled) {speak("yes Hello, how are you today?");} // ToDo: Added "yes" to the start to test
     }
 
     /** Check if the class is present (it won't be on simulators, only on the BuddyRobot itself) */
@@ -61,13 +63,14 @@ public class BuddyTTS {
 
         // Disable AudioTracking while speaking
         AudioTracking.DisableUsbCallback();
+        Emotions.setMood(FacialExpression.NEUTRAL);
 
         // Use BuddySDK Speech
         BuddySDK.Speech.startSpeaking(text,
                 new ITTSCallback.Stub() {
                     @Override public void onSuccess(String s) { speechCompleted(s); }
-                    @Override public void onPause  ()         {                }
-                    @Override public void onResume ()         {                }
+                    @Override public void onPause  ()         { }
+                    @Override public void onResume ()         { }
                     @Override public void onError  (String s) { speechCompleted(s); }
                 });
     }
