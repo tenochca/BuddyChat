@@ -48,8 +48,12 @@ public class AudioTracking {
     private static final ArrayBlockingQueue<Float> angleQueue = new ArrayBlockingQueue<>(N);
 
     // Queue methods
-    static void         pushAngle(float locationAngle) {if (!angleQueue.offer(locationAngle)) { angleQueue.poll(); angleQueue.offer(locationAngle); }}
-    static List<Float>  recentAngles() { return new ArrayList<>(angleQueue); } // snapshot copy
+    private static void pushAngle  (float locationAngle) { if (!angleQueue.offer(locationAngle)) { angleQueue.poll(); angleQueue.offer(locationAngle); }}
+    public  static void clearAngles() { angleQueue.clear(); }                 // Empty the queue
+    static List<Float> recentAngles() { return new ArrayList<>(angleQueue); } // Snapshot copy
+    static List<Float>  drainAngles() { List<Float> angleList = recentAngles(); clearAngles(); return angleList; }
+
+    // Get the average angle
     public static float averageAngle() {
         // Make a snapshot to avoid iterating while it changes
         Object[] snap = angleQueue.toArray();
@@ -61,13 +65,6 @@ public class AudioTracking {
         return (float)(sum / snap.length);
     }
 
-    // Empty the queue
-    static void clearAngles() { angleQueue.clear(); }
-    static List<Float> drainAngles() {
-        List<Float> angleList = recentAngles();
-        clearAngles();
-        return angleList;
-    }
 
     // --------------------------------------------------------------------
     // Setup Sensors

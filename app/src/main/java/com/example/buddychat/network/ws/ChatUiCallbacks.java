@@ -100,7 +100,10 @@ public class ChatUiCallbacks implements ChatListener {
 
         // ToDo: Testing the "Yes" detection functionality here
         boolean isYes = body.strip().split("\\s+", 2)[0].equalsIgnoreCase("yes");
-        if (isYes) { HeadMotors.buddyYesMove(); }
+        if (isYes) {
+            Log.i(TAG, String.format("%s YES detected in LLM response", TAG));
+            //HeadMotors.buddyYesMove();
+        }
 
         // Hop to UI thread to do actions
         ui.post(() -> {

@@ -41,9 +41,9 @@ public class STTCallbacks implements STTListener {
             // Send the message over the WebSocket
             utteranceCallback.sendString(utterance);
 
-            // ToDo: Trying an idea out
+            // ToDo: ---- Trying an idea out ----
             Emotions.setMood(FacialExpression.THINKING);
-            float averageAngle = AudioTracking.averageAngle();
+            float averageAngle = AudioTracking.averageAngle(); AudioTracking.clearAngles();
             Log.i(TAG, String.format("%s Recent average LocationAngle: %.4f", TAG, averageAngle));
 
             // Logging the message
