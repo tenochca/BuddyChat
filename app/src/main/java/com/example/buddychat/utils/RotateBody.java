@@ -10,7 +10,8 @@ import com.bfr.buddysdk.BuddySDK;
 // ====================================================================
 public class RotateBody {
     private static final String TAG = "[DPU_RotateBody]";
-    public  static boolean wheelsEnabled = false;
+    public  static boolean wheelsEnabled    = false;
+    public  static boolean emergencyStopped = false;
 
     // --------------------------------------------------------------------
     // Rotate Buddy a set number of degrees at a set speed
@@ -51,6 +52,8 @@ public class RotateBody {
     // --------------------------------------------------------------------
     public static void EnableWheels(boolean enable) {
         Log.d(TAG, String.format("%s Toggling wheels %s", TAG, (enable ? "on" : "off")));
+        if (emergencyStopped) { return; } // ToDo: Controlled in MainApplication; might need changing...
+
         BuddySDK.USB.enableWheels(enable, new IUsbCommadRsp.Stub() {
             @Override public void onSuccess(String s) { Log.d(TAG, String.format("%s EnableWheels success: %s", TAG, s)); wheelsEnabled = enable; }
             @Override public void onFailed (String s) { Log.w(TAG, String.format("%s EnableWheels failed: %s",  TAG, s)); }

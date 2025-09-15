@@ -11,7 +11,8 @@ import com.bfr.buddysdk.BuddySDK;
 // Page 33 of the SDK guide
 public class HeadMotors {
     private static final String TAG = "[DPU_HeadMotors]";
-    private static volatile boolean running = false;
+    private static volatile boolean running          = false;
+    public  static          boolean emergencyStopped = false;
 
     // --------------------------------------------------------------------
     // Toggle the motors on and off
@@ -40,6 +41,17 @@ public class HeadMotors {
         if (yesStatus.contains("DISABLE")) { toggleYesMotor(true); }
     }
 
+    // Check if the specified motor is ready (check page 32 of the SDK guide)
+    // "DISABLE => Motor is disabled
+    // "STOP"   => Motor is enabled
+    // "SET"    => Motor is moving
+    // "NONE"   => Default (what does that mean? maybe if the board isn't responding?)
+    private static boolean motorEnabled(String type) {
+        if      (type.equals("YES")) { return BuddySDK.Actuators.getYesStatus().toUpperCase().contains("STOP"); }
+        else if (type.equals("NO" )) { return BuddySDK.Actuators.getNoStatus ().toUpperCase().contains("STOP"); }
+        else { return false; }
+    }
+
     // --------------------------------------------------------------------
     // Perform the yes/no head movements
     // --------------------------------------------------------------------
@@ -51,7 +63,7 @@ public class HeadMotors {
 
     // Angle range is -35 and 45; Speed range is -49.2 to 49.2 but we should keep it low.
     private static void buddyYesMove(float speed, float angle, int remaining) {
-        if (!BuddySDK.Actuators.getYesStatus().toUpperCase().contains("STOP")) { return; }
+        if (!motorEnabled("YES") | emergencyStopped) { return; } // Motor isn't ready or we are emergency stopped
 
         // 3 parts: down (-20), up (+20), back to home (0)
         BuddySDK.USB.buddySayYes(speed, angle, new IUsbCommadRsp.Stub() {

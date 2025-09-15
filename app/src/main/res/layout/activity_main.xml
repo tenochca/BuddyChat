@@ -49,13 +49,13 @@
         app:layout_constraintHorizontal_bias = "0.5"
         />
 
-    <!-- Testing Button -->
+    <!-- Testing Button #1 -->
     <Button android:id="@+id/buttonTester1"
         android:layout_width  = "wrap_content"
         android:layout_height = "wrap_content"
         android:layout_marginTop="20dp"
 
-        android:text="@string/test_button"
+        android:text="@string/test_button1"
         android:textAppearance = "@style/TextProfileBar"
         android:background     = "@color/buddy_dark"
 
@@ -64,6 +64,26 @@
         android:alpha             = "0.8"
 
         app:layout_constraintTop_toBottomOf  = "@id/buttonStartEnd"
+        app:layout_constraintStart_toStartOf = "parent"
+        app:layout_constraintEnd_toEndOf     = "parent"
+        app:layout_constraintHorizontal_bias = "0.5"
+        />
+
+    <!-- Testing Button #2 -->
+    <Button android:id="@+id/buttonTester2"
+        android:layout_width  = "wrap_content"
+        android:layout_height = "wrap_content"
+        android:layout_marginTop="20dp"
+
+        android:text="@string/test_button2"
+        android:textAppearance = "@style/TextProfileBar"
+        android:background     = "@color/design_default_color_error"
+
+        android:textSize          = "16sp"
+        android:paddingHorizontal = "20dp"
+        android:alpha             = "0.8"
+
+        app:layout_constraintTop_toBottomOf  = "@id/buttonTester1"
         app:layout_constraintStart_toStartOf = "parent"
         app:layout_constraintEnd_toEndOf     = "parent"
         app:layout_constraintHorizontal_bias = "0.5"

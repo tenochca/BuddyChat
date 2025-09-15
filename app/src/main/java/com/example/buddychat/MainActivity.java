@@ -44,11 +44,12 @@ public class MainActivity extends BuddyActivity {
     private final String TAG = "[DPU_Main]";
 
     /// UI References
-    private TextView textUserInfo;
-    private TextView userView;
-    private TextView botView;
-    private Button   buttonStartEnd;
-    private Button   buttonTester1;
+    private TextView textUserInfo;   // Username (currently hidden)
+    private TextView userView;       // Display user's most recent message
+    private TextView botView;        // Display Buddy's most recent message
+    private Button   buttonStartEnd; // Start or end the chat/backend websocket connection
+    private Button   buttonTester1;  // [Development] Trigger features to be tested
+    private Button   buttonTester2;  // [Development] Emergency stop any motors/movements
 
     /// WebSocket related
     private volatile String            authToken;
@@ -133,22 +134,32 @@ public class MainActivity extends BuddyActivity {
         botView        = findViewById(R.id.botView       );
         buttonStartEnd = findViewById(R.id.buttonStartEnd);
         buttonTester1  = findViewById(R.id.buttonTester1 );
+        buttonTester2  = findViewById(R.id.buttonTester2 );
     }
 
     /** Set button listeners */
     private void wireButtons() {
+        // Start or end the chat/backend websocket connection
         buttonStartEnd.setOnClickListener(v -> {
-            if (!isRunning) { chat.connect(authToken, chatCallbacks); }
-            else            { chat.endChat();                         }
+            Log.w(TAG, String.format("%s", TAG));
+            if (!isRunning) { chat.connect(authToken, chatCallbacks); } else { chat.endChat(); }
 
             BuddyTTS.toggle(); BuddySTT.toggle(sttCallbacks);
             Toast.makeText(this, (isRunning ? "Chat connected; STT & TTS started.": "Chat ended; STT & TTS paused."), Toast.LENGTH_LONG).show();
         });
 
-        // Testing button
+        // Testing Button #1: Trigger features to be tested
         buttonTester1.setOnClickListener(v -> {
+            Log.w(TAG, String.format("%s Testing Button #1 pressed.", TAG));
             HeadMotors.buddyYesMove();
             Emotions.setMood("ANGRY", 2_000L);
+        });
+
+        // Testing Button #2: Emergency stop any motors/movements
+        buttonTester2.setOnClickListener(v -> {
+            Log.w(TAG, String.format("%s !!! Emergency Stop Button Activated !!! -------", TAG));
+            RotateBody.StopMotors(); RotateBody.emergencyStopped = true;
+            HeadMotors.toggleMotors(false); HeadMotors.emergencyStopped = true;
         });
 
     }

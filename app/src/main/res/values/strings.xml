@@ -3,7 +3,8 @@
     <string name="start_chat"> Start Chat </string>
     <string name="end_chat"  > End Chat   </string>
 
-    <string name="test_button"> TEST BUTTON </string>
+    <string name="test_button1"> TEST BUTTON #1 </string>
+    <string name="test_button2"> EMERGENCY STOP </string>
 
     <string name="no_profile"  tools:ignore="TypographyEllipsis"> Not logged in yet...          </string>
     <string name="logging_in"  tools:ignore="TypographyEllipsis"> Signing in...                 </string>
