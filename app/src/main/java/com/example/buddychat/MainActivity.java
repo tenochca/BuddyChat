@@ -47,6 +47,7 @@ public class MainActivity extends BuddyActivity {
     private TextView userView;
     private TextView botView;
     private Button   buttonStartEnd;
+    private Button   buttonTester1;
 
     /// WebSocket related
     private volatile String            authToken;
@@ -130,6 +131,7 @@ public class MainActivity extends BuddyActivity {
         userView       = findViewById(R.id.userView      );
         botView        = findViewById(R.id.botView       );
         buttonStartEnd = findViewById(R.id.buttonStartEnd);
+        buttonTester1  = findViewById(R.id.buttonTester1 );
     }
 
     /** Set button listeners */
@@ -137,19 +139,18 @@ public class MainActivity extends BuddyActivity {
         buttonStartEnd.setOnClickListener(v -> {
             if (!isRunning) { chat.connect(authToken, chatCallbacks); }
             else            { chat.endChat();                         }
+
             BuddyTTS.toggle(); BuddySTT.toggle(sttCallbacks);
+            Toast.makeText(this, (isRunning ? "Chat connected; STT & TTS started.": "Chat ended; STT & TTS paused."), Toast.LENGTH_LONG).show();
+        });
 
-            // Logging
-            String logMsg = "Chat connected; STT & TTS started.";
-            if (!isRunning) { logMsg = "Chat ended; STT & TTS paused."; }
-            Toast.makeText(this, logMsg, Toast.LENGTH_LONG).show();
-
-
-            HeadMotors.buddyYesMove();
-
+        // Testing button
+        buttonTester1.setOnClickListener(v -> {
+            
 
         });
     }
+
 
     // ====================================================================
     // Handle API requests for logging in
