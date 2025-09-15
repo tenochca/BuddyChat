@@ -18,6 +18,7 @@ import com.example.buddychat.tts.BuddyTTS;
 
 // Emotion Response Handling
 import com.example.buddychat.utils.Emotions;
+import com.example.buddychat.utils.HeadMotors;
 
 // ====================================================================
 // Handles the WebSocket responses
@@ -60,8 +61,11 @@ public class ChatUiCallbacks implements ChatListener {
             JSONObject obj  = new JSONObject(raw);
             String type     = obj.optString("type", "");
 
-            if      ("llm_response".equals(type)) { onLLMResponse(obj); } // Received LLM response
-            else if ("affect"      .equals(type)) { onAffect     (obj); } // Received emotion data
+            switch (type) {
+                case "llm_response" : onLLMResponse(obj); break;
+                case "affect"       : onAffect     (obj); break;
+                case "expression"   : onExpression (obj); break;
+            }
 
         } catch (JSONException e) {
             ui.post(() -> Toast.makeText(
@@ -89,20 +93,20 @@ public class ChatUiCallbacks implements ChatListener {
     // --------------------------------------------------------------------
     // Handle different types of WS messages
     // --------------------------------------------------------------------
-    // For now just "llm_response" & "affect"
     /** Handle "llm_response" data from the backend (an utterance from the LLM). */
     private void onLLMResponse(JSONObject obj) {
         final String body = obj.optString("data", "(empty)");
         final String time = obj.optString("time", "");
 
+        // ToDo: Testing the "Yes" detection functionality here
+        boolean isYes = body.strip().split("\\s+", 2)[0].equalsIgnoreCase("yes");
+        if (isYes) { HeadMotors.buddyYesMove(); }
+
         // Hop to UI thread to do actions
         ui.post(() -> {
-            // Log the message & display it on the screen
-            Log.d(TAG, String.format("%s: %s", time, body));
-            statusView.setText(String.format("Buddy: %s (%s)", body, time));
-
-            // Fire off text-to-speech for this message
+            Log.i(TAG, String.format("%s %s: %s", TAG, time, body));
             BuddyTTS.speak(body);
+            statusView.setText(String.format("Buddy: %s (%s)", body, time));
         });
     }
 
@@ -110,7 +114,14 @@ public class ChatUiCallbacks implements ChatListener {
     private static void onAffect(JSONObject obj) {
         final float valence = (float) obj.optDouble("valence", 0.5);
         final float arousal = (float) obj.optDouble("arousal", 0.5);
+        Emotions.setMood("NEUTRAL"); // Buddy's expression must be "NEUTRAL" for these values
         Emotions.setPositivityEnergy(valence, arousal);
+    }
+
+    /** Handle "expression" data */
+    private static void onExpression(JSONObject obj) {
+        final String rawExpression = obj.optString("expression", "NEUTRAL");
+        Emotions.setMood(rawExpression, 3_000L);
     }
 
 }
