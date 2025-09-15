@@ -20,6 +20,7 @@ import com.example.buddychat.network.ws.ChatUiCallbacks;
 
 // Buddy Features
 import com.example.buddychat.utils.AudioTracking;
+import com.example.buddychat.utils.Emotions;
 import com.example.buddychat.utils.RotateBody;
 import com.example.buddychat.utils.HeadMotors;
 
@@ -146,10 +147,12 @@ public class MainActivity extends BuddyActivity {
 
         // Testing button
         buttonTester1.setOnClickListener(v -> {
-            
-
+            HeadMotors.buddyYesMove();
+            Emotions.setMood("ANGRY", 2_000L);
         });
+
     }
+
 
 
     // ====================================================================
