@@ -6,12 +6,13 @@ import android.util.Log;
 import com.bfr.buddy.speech.shared.ITTSCallback;
 import com.bfr.buddysdk.BuddySDK;
 
+import com.example.buddychat.utils.AudioTracking;
+
 // ====================================================================
 // Wrapper class around BuddySDK.Speech for Text-to-Speech
 // ====================================================================
 public class BuddyTTS {
-
-    private static final String  TAG     = "BuddyTTS";
+    private static final String  TAG     = "[BuddyTTS]";
     private static       boolean loaded  = false;
     private static       boolean enabled = false;
 
@@ -48,29 +49,38 @@ public class BuddyTTS {
     }
 
     // --------------------------------------------------------------------
-    // Text-to-Speech Usage
+    // Text-to-Speech
     // --------------------------------------------------------------------
-    /** Fire-and-forget speech */
+    // ToDo: Start of speech should disable AudioTracking; onSuccess or onError should resume it.
+    // ToDo: So we would need to receive a callback/method here to toggle AudioTracking
+    // ToDo: Or can we just import it?
     public static void speak(String text) {
         // Ready checks
-        if (!isAvailable()) { Log.w(TAG, "TTS not ready. Call BuddyTTS.init() first."); return; }
-        if (!enabled      ) { Log.w(TAG, "TTS not enabled."                          ); return; }
+        if (!isAvailable()) { Log.w(TAG, String.format("%s TTS not ready. Call BuddyTTS.init() first.", TAG)); return; }
+        if (!enabled      ) { Log.w(TAG, String.format("%s TTS not enabled."                          , TAG)); return; }
+
+        // Disable AudioTracking while speaking
+        AudioTracking.DisableUsbCallback();
 
         // Use BuddySDK Speech
-        BuddySDK.Speech.startSpeaking(
-                text,
+        BuddySDK.Speech.startSpeaking(text,
                 new ITTSCallback.Stub() {
-                    @Override public void onSuccess(String s) { Log.d(TAG, s); }
+                    @Override public void onSuccess(String s) { speechCompleted(s); }
                     @Override public void onPause  ()         {                }
                     @Override public void onResume ()         {                }
-                    @Override public void onError  (String s) { Log.e(TAG, s); }
+                    @Override public void onError  (String s) { speechCompleted(s); }
                 });
+    }
+    private static void speechCompleted(String s) {
+        Log.d(TAG, String.format("%s Speech completed: %s", TAG, s));
+        AudioTracking.EnableUsbCallback();
     }
 
     /** Stop current utterance if there is one */
     public static void stop() {
-        if (!isAvailable()) { Log.w(TAG, "'stop()' call failed -- TTS not ready."); return; }
-        BuddySDK.Speech.stopSpeaking();
+        if (!isAvailable()) { Log.w(TAG, String.format("%s 'stop()' call failed -- TTS not ready.", TAG)); }
+        else { BuddySDK.Speech.stopSpeaking(); }
+
     }
 
     /** Settings for the speech, not using right now */
