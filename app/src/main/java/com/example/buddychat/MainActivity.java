@@ -21,6 +21,7 @@ import com.example.buddychat.network.ws.ChatUiCallbacks;
 // Buddy Features
 import com.example.buddychat.utils.AudioTracking;
 import com.example.buddychat.utils.RotateBody;
+import com.example.buddychat.utils.HeadMotors;
 
 // BuddySDK.Speech wrappers
 import com.example.buddychat.stt.STTCallbacks;
@@ -39,7 +40,7 @@ public class MainActivity extends BuddyActivity {
     // --------------------------------------------------------------------
     // Persistent variables
     // --------------------------------------------------------------------
-    private final String TAG = "BuddyChatMain";
+    private final String TAG = "[DPU_Main]";
 
     /// UI References
     private TextView textUserInfo;
@@ -95,8 +96,10 @@ public class MainActivity extends BuddyActivity {
         BuddyTTS.init(getApplicationContext());
         BuddySTT.init(this, Locale.ENGLISH, Engine.CERENCE_FREE, true);
 
-        // Setup AudioTracking
+        // Setup AudioTracking & HeadMotors
         AudioTracking.setupSensors();
+        //AudioTracking.toggleTracking(true);
+        //AudioTracking.toggleUsbCallback();
     }
 
     // --------------------------------------------------------------------
@@ -104,10 +107,18 @@ public class MainActivity extends BuddyActivity {
     // --------------------------------------------------------------------
     // The wheels example project had onStop and onDestroy disable the wheels...
     // I'm doing the emergency stop here too. That function disables the wheels at the end.
-    @Override public void onPause  () { super.onPause  (); Log.i(TAG, "onPause"  ); }
-    @Override public void onResume () { super.onResume (); Log.i(TAG, "onResume" ); }
-    @Override public void onStop   () { super.onStop   (); Log.i(TAG, "onStop"   ); RotateBody.StopMotors(); }
-    @Override public void onDestroy() { super.onDestroy(); Log.i(TAG, "onDestroy"); RotateBody.StopMotors(); }
+    @Override public void onPause  () { super.onPause  (); Log.i(TAG, String.format("%s onPause",  TAG)); }
+    @Override public void onResume () { super.onResume (); Log.i(TAG, String.format("%s onResume", TAG)); }
+    @Override public void onStop   () {
+        super.onStop   (); Log.i(TAG, String.format("%s onStop", TAG));
+        RotateBody.StopMotors();
+        HeadMotors.toggleMotors(false);
+    }
+    @Override public void onDestroy() {
+        super.onDestroy(); Log.i(TAG, String.format("%s onDestroy", TAG));
+        RotateBody.StopMotors();
+        HeadMotors.toggleMotors(false);
+    }
 
 
     // ====================================================================
@@ -132,6 +143,11 @@ public class MainActivity extends BuddyActivity {
             String logMsg = "Chat connected; STT & TTS started.";
             if (!isRunning) { logMsg = "Chat ended; STT & TTS paused."; }
             Toast.makeText(this, logMsg, Toast.LENGTH_LONG).show();
+
+
+            HeadMotors.buddyYesMove();
+
+
         });
     }
 
