@@ -24,9 +24,24 @@ import com.bfr.buddysdk.BuddySDK;
 // ====================================================================
 // AudioTracking
 // ====================================================================
-// ToDo: Maybe collect values for a while, and then if we are supposed to start talking...
-// ToDo: Take the average of those values and turn that way.
-// ToDo: We know that we are turning towards the audio source because
+/** AudioTracking
+ * <br>
+ * (Right now there are two methods for this, but we probably will settle on using method #2 if it
+ * works well in testing.)
+ * <br><br>
+ * We use a queue to help smooth the sensor reading out due to its' instability. When we make a
+ * call to actually rotate buddy and use the queues value, we take the average and then clear the
+ * queue. We should (probably) only call the function to rotate Buddy on STT detection, because
+ * with that we know that the user was just speaking for at least a short period before the
+ * detection event.
+ * <br><br>
+ * There are four important methods: <ul>
+ *   <li> setupSensors()       => Sets up the sensor module for the SDK
+ *   <li> EnableUsbCallback()  => Registers a CB with the sensor module (reads sensor data)
+ *   <li> DisableUsbCallback() => Unregisters the CB (no more data will be read)
+ *   <li> rotateTowardsAudio() => Takes the average angle from the recent queue, rotates Buddy that direction
+ *   </ul>
+ */
 public class AudioTracking {
     private static final String TAG = "DPU_AudioTracking";
 
@@ -128,24 +143,25 @@ public class AudioTracking {
     // For now, we are just going to do logging
     private static void processAudioData(float ambientNoise, float locationAngle) {
         if (locationAngle == -100) { return; } // -100 locationAngle is the equivalent of Null
-        pushAngle(locationAngle);
+        pushAngle(locationAngle);              // Add it to the queue
+        //Log.d(TAG, String.format("%s ===== Ambient dB: %s, Angle: %s =====", TAG, ambientNoise, locationAngle));
 
-        // Check the change in angle
-        float angleChange = Math.abs(locationAngle - LocationAngle);
-        Log.d(TAG, String.format("===== Ambient dB: %s, Angle: %s | dAngle: %s =====", ambientNoise, locationAngle, angleChange));
+        // Update the stored values
+        //AmbientNoise = ambientNoise; LocationAngle = locationAngle;
+    }
 
-        // Perform actions as a result of this
-        if ((ambientNoise > MIN_DECIBELS) & (angleChange > MIN_ANGLE)) {
-            // Rotate Buddy to look at the source of the sound
-            RotateBody.Rotate(10, locationAngle);
+    // ToDo: Should I make sure this is paused while we do this?
+    /** Use the queue of Buddy's most recent audioLocation readings to turn Buddy. */
+    public static void rotateTowardsAudio() {
+        // Get the average of the recent angles & reset the queue
+        final float recentAngle = averageAngle(); clearAngles();
+        Log.i(TAG, String.format("%s averageAngle: %.2f | attempting to rotate Buddy", TAG, recentAngle));
 
-            // ToDo: Temporarily calling the Emotions code here to test if it works
-            // Emotions.setPositivityEnergy((float) 0.9, (float) 0.9);
-            // HeadMotors.buddyYesMove();
-        }
+        // Send the command to rotate
+        RotateBody.Rotate(5, recentAngle);
 
-        // Update the stored values when we are done
-        AmbientNoise = ambientNoise; LocationAngle = locationAngle;
+        // Update the stored angle
+        LocationAngle = recentAngle;
     }
 
 }

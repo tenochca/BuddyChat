@@ -22,7 +22,7 @@ public class Emotions {
     // --------------------------------------------------------------------
     // Valence & Arousal
     // --------------------------------------------------------------------
-    /** Set the Positivity & Energy levels of Buddy's face. */
+    /** Set the Positivity & Energy levels of Buddy's face (only works if face is NEUTRAL). */
     public static void setPositivityEnergy(float iPositivity, float iEnergy) {
         Log.d(TAG, String.format("%s Positivity: %.3f, Energy: %.3f", TAG, iPositivity, iEnergy));
         BuddySDK.UI.setFacePositivity(iPositivity);
@@ -38,17 +38,21 @@ public class Emotions {
     /** Overloaded method to allow calls with raw strings for the desired mood. */
     public static void setMood(String moodString) { setMood(parseExpression(moodString)); }
 
+    // --------------------------------------------------------------------
+    // Self-resetting mood (i.e. set to angry -> back to NEUTRAL after 2s)
+    // --------------------------------------------------------------------
+    public static void setMood(String moodString, long resetMS) { setMood(parseExpression(moodString), resetMS); }
+
     /** Overload method for resetting the mood to 'NEUTRAL' after a delay. */
-    public static void setMood(String moodString, long resetMs) {
-        // Get the expression -- no need to do the callback if we are already setting it to neutral.
-        FacialExpression iExpression = parseExpression(moodString);
+    public static void setMood(FacialExpression iExpression, long resetMs) {
+        // No need to do the callback if we are already setting it to neutral.
         if (iExpression == FacialExpression.NEUTRAL ) { setMood(iExpression); return; }
 
         // Set mood with a reset callback
         final int myVersion = ++version;
         BuddySDK.UI.setMood(iExpression, new IUIFaceAnimationCallback.Stub() {
             @Override public void onAnimationEnd(String s, String s1) throws RemoteException {
-                Log.d(TAG, String.format("Face animation end: %s (%s)", s, s1)); if (myVersion != version) return;  // stale
+                Log.d(TAG, String.format("%s Face animation end: %s (%s)", TAG, s, s1)); if (myVersion != version) return;  // stale
                 pendingReset = () -> { if (myVersion == version) { BuddySDK.UI.setMood(FacialExpression.NEUTRAL); }};
                 MAIN.postDelayed(pendingReset, resetMs);
             }
