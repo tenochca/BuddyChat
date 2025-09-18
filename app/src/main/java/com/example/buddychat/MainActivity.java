@@ -52,6 +52,7 @@ public class MainActivity extends BuddyActivity {
     private Button   buttonStartEnd; // Start or end the chat/backend websocket connection
     private Button   buttonTester1;  // [Development] Trigger features to be tested
     private Button   buttonTester2;  // [Development] Emergency stop any motors/movements
+    private Button   buttonTester3;  // [Development] Trigger features to be tested
 
     /// WebSocket related
     private volatile String            authToken;
@@ -154,6 +155,7 @@ public class MainActivity extends BuddyActivity {
         buttonStartEnd = findViewById(R.id.buttonStartEnd);
         buttonTester1  = findViewById(R.id.buttonTester1 );
         buttonTester2  = findViewById(R.id.buttonTester2 );
+        buttonTester3  = findViewById(R.id.buttonTester3 );
     }
 
     /** Set button listeners */
@@ -178,9 +180,15 @@ public class MainActivity extends BuddyActivity {
             //HeadMotors.resetYesPosition();
             HeadMotors.buddyYesMove();
 
+            Emotions.setMood(FacialExpression.ANGRY, 2_000L);
 
-            Emotions.setMood("ANGRY", 2_000L);
+        });
 
+        // Testing Button #3: Trigger more features
+        buttonTester3.setOnClickListener(v -> {
+            Log.w(TAG, String.format("%s Testing Button #3 pressed.", TAG));
+            HeadMotors.resetYesPosition(); // Reset Yes motor to position 0
+            Emotions.setMood(FacialExpression.HAPPY, 2_000L);
         });
 
         // Testing Button #2: Emergency stop any motors/movements
