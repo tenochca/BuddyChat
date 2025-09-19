@@ -18,6 +18,7 @@ import com.example.buddychat.network.model.AuthResponse;
 // API call utility
 // ====================================================================
 // Right now just logging in & health check
+// ToDo: Logging messages for login success should be better
 public class NetworkUtils {
     // --------------------------------------------------------------------
     // Constants

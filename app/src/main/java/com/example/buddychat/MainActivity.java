@@ -15,8 +15,7 @@ import com.bfr.buddysdk.BuddyActivity;
 import com.bfr.buddy.ui.shared.FacialExpression;
 
 // Speech System
-import com.example.buddychat.network.NetworkUtils;
-import com.example.buddychat.network.model.Profile;
+import com.example.buddychat.network.LoginAndProfile;
 import com.example.buddychat.network.ws.ChatSocketManager;
 import com.example.buddychat.network.ws.ChatUiCallbacks;
 
@@ -67,25 +66,24 @@ public class MainActivity extends BuddyActivity {
     // I don't know if maybe all of this should just go into the onSDKReady() function...
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        /// Setup the app & layout
+        // Setup the app & layout
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         Log.i("TEST", "-------------- App running --------------");
         Log.i(TAG, String.format("%s <========== onCreate ==========>", TAG));
 
-        /// Setup UI
+        // Setup UI
         initializeUI(); wireButtons();
 
-        /// WebSocket callback object
+        // WebSocket callback object
         chatCallbacks = new ChatUiCallbacks(botView, buttonStartEnd, running -> isRunning = running);
 
-        /// STT callback object (we can pass it stuff here, like the textView)
+        // STT callback object (we can pass it stuff here, like the textView)
         sttCallbacks = new STTCallbacks(userView, chat::sendString);
 
-        /// Login + set tokens
-        Log.d("API", "Logging in on app startup...");
-        textUserInfo.setText(R.string.logging_in);
-        doLoginAndProfile();
+        // Login, set auth tokens, and fetch the profile
+        final LoginAndProfile loginAndProfile = new LoginAndProfile(textUserInfo, botView);
+        authToken = loginAndProfile.doLoginAndProfile();
     }
 
     // ====================================================================
@@ -169,19 +167,15 @@ public class MainActivity extends BuddyActivity {
             Toast.makeText(this, (isRunning ? "Chat connected; STT & TTS started.": "Chat ended; STT & TTS paused."), Toast.LENGTH_LONG).show();
         });
 
+        // --------------------------------------------------------------------
+        // Testing Buttons
+        // --------------------------------------------------------------------
         // Testing Button #1: Trigger features to be tested
         buttonTester1.setOnClickListener(v -> {
             Log.w(TAG, String.format("%s Testing Button #1 pressed.", TAG));
-
-            // 1) Activate YesMotor
-            // 2) BuddyYesMove
-            // 3) Check position again (it should turn itself off automatically)
             HeadMotors.getHeadMotorStatus();
-            //HeadMotors.resetYesPosition();
             HeadMotors.buddyYesMove();
-
             Emotions.setMood(FacialExpression.ANGRY, 2_000L);
-
         });
 
         // Testing Button #3: Trigger more features
@@ -189,6 +183,7 @@ public class MainActivity extends BuddyActivity {
             Log.w(TAG, String.format("%s Testing Button #3 pressed.", TAG));
             HeadMotors.resetYesPosition(); // Reset Yes motor to position 0
             Emotions.setMood(FacialExpression.HAPPY, 2_000L);
+            HeadMotors.getHeadMotorStatus();
         });
 
         // Testing Button #2: Emergency stop any motors/movements
@@ -198,57 +193,10 @@ public class MainActivity extends BuddyActivity {
             HeadMotors.StopMotors(); HeadMotors.emergencyStopped = true;
         });
 
-
-
-
     }
 
 
 
 
 
-
-
-
-
-
-
-
-    // ====================================================================
-    // Handle API requests for logging in
-    // ====================================================================
-    // TODO: This probably should be put into a separate file
-    // ToDo: Logging messages for login success should be better
-    /** Adds some stuff to the UI (username, etc), and sets the auth token. */
-    private void doLoginAndProfile() {
-        /// Test the API
-        NetworkUtils.pingHealth();
-
-        /// Login
-        NetworkUtils.login(new NetworkUtils.AuthCallback() {
-            @Override public void onSuccess(String token) {
-                authToken = token;
-                runOnUiThread(() -> botView.setText(R.string.get_profile));
-
-                NetworkUtils.fetchProfile(token, new NetworkUtils.ProfileCallback() {
-                    @Override public void onSuccess(Profile p) {
-                        runOnUiThread(() -> textUserInfo.setText(String.format("%s %s | %s", p.plwd.first_name, p.plwd.last_name, p.plwd.username)));
-                        runOnUiThread(() -> botView     .setText(String.format("Welcome %s", p.plwd.username)));
-                        runOnUiThread(() -> Toast.makeText(MainActivity.this, String.format("Welcome %s", p.plwd.username), Toast.LENGTH_LONG).show());
-                    }
-                    @Override public void onError(Throwable t) {runOnUiThread(() -> botView.setText(String.format("Profile fail: %s", t.getMessage())));}
-                });
-            }
-
-            @Override public void onError(Throwable t) {
-                Log.d("LOGIN", String.format("Login failed: %s", t.getMessage()));
-                runOnUiThread(() -> botView.setText(String.format("Login failed: %s", t.getMessage())));
-            }
-        });
-    }
 }
-
-
-
-
-
