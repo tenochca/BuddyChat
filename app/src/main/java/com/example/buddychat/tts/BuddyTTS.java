@@ -39,7 +39,7 @@ public class BuddyTTS {
         if (enabled && BuddySDK.Speech.isSpeaking()) { stop(); }
         enabled = !enabled;
         Log.w(TAG, enabled ? "TTS Enabled." : "TTS Disabled");
-        if (enabled) {speak("yes Hello, how are you today?");} // ToDo: Added "yes" to the start to test
+        if (enabled) {speak("Hello, how are you today?");}
     }
 
     /** Check if the class is present (it won't be on simulators, only on the BuddyRobot itself) */

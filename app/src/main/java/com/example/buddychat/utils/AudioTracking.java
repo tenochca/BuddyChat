@@ -5,10 +5,6 @@ import android.os.Looper;
 import android.os.RemoteException;
 import android.util.Log;
 
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.ArrayList;
-import java.util.List;
-
 // BuddySDK imports
 import com.bfr.buddy.usb.shared.IUsbAidlCbListener;
 import com.bfr.buddy.usb.shared.IUsbCommadRsp;
@@ -73,25 +69,27 @@ public class AudioTracking {
     // Method #1: Looped "Runnable" call with a set update interval
     // ====================================================================
     // ToDo: This will be deleted but I'm just keeping it for now since I might want to keep it as a reference
-    /** Runs the continuous checks for the sensors. */
+    // Runs the continuous checks for the sensors.
+    /*
     private static final Runnable trackingRunnable = new Runnable() {
         @Override public void run() { if (enabled) { updateSensors(); handler.postDelayed(this, UPDATE_INTERVAL_MS); }}
     };
 
-    /** Check the sensors. */
+    // Check the sensors
     public static void updateSensors() {
         float ambientNoise  = BuddySDK.Sensors.Microphone().getAmbiantSound();
         float locationAngle = BuddySDK.Sensors.Microphone().getSoundLocalisation();
         processAudioData(ambientNoise, locationAngle);
     }
 
-    /** Turn the audio tracking on or off */
+    // Turn the audio tracking on or off
     public static void toggleTracking(boolean enable) {
         if (handler == null) { handler = new Handler(Looper.getMainLooper()); } // Make sure the handler is initialized
         // Enable & disable
         if      ( enable && !enabled) { enabled = true;  handler.post           (trackingRunnable); }
         else if (!enable &&  enabled) { enabled = false; handler.removeCallbacks(trackingRunnable); }
     }
+    */
 
     // ====================================================================
     // Method #2: Subscriber
