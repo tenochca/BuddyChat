@@ -42,9 +42,9 @@ public class MainActivity extends BuddyActivity {
     // --------------------------------------------------------------------
     // Persistent variables
     // --------------------------------------------------------------------
-    private final String TAG = "[DPU_Main]";
+    private static final String TAG = "[DPU_Main]";
 
-    /// UI References
+    // UI References
     private TextView textUserInfo;   // Username (currently hidden)
     private TextView userView;       // Display user's most recent message
     private TextView botView;        // Display Buddy's most recent message
@@ -55,7 +55,7 @@ public class MainActivity extends BuddyActivity {
     private Button   buttonTester3;  // [Development] Trigger features to be tested
     private TextView testView1;
 
-    /// WebSocket related
+    // WebSocket related
     private volatile String            authToken;
     private          boolean           isRunning = false;
     private final    ChatSocketManager chat      = new ChatSocketManager();
@@ -179,8 +179,11 @@ public class MainActivity extends BuddyActivity {
         buttonTester1.setOnClickListener(v -> {
             Log.w(TAG, String.format("%s Testing Button #1 pressed.", TAG));
             HeadMotors.getHeadMotorStatus();
-            HeadMotors.buddyYesMove();
+
+            HeadMotors.nodYes();
+
             Emotions.setMood(FacialExpression.ANGRY, 2_000L);
+
             HeadMotors.getHeadMotorStatus();
         });
 
@@ -188,10 +191,14 @@ public class MainActivity extends BuddyActivity {
         buttonTester3.setOnClickListener(v -> {
             Log.w(TAG, String.format("%s Testing Button #3 pressed.", TAG));
             HeadMotors.getHeadMotorStatus();
+
             HeadMotors.resetYesPosition(); // Reset Yes motor to position 0
+
             Emotions.setMood(FacialExpression.HAPPY, 2_000L);
+
             HeadMotors.getHeadMotorStatus();
         });
+
 
 
 
