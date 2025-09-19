@@ -22,6 +22,7 @@ public class Emotions {
     // --------------------------------------------------------------------
     // Valence & Arousal
     // --------------------------------------------------------------------
+    // ToDo: Not sure if I have to set Buddy's face to NEUTRAL before calling these methods...
     /** Set the Positivity & Energy levels of Buddy's face (only works if face is NEUTRAL). */
     public static void setPositivityEnergy(float iPositivity, float iEnergy) {
         Log.d(TAG, String.format("%s Positivity: %.3f, Energy: %.3f", TAG, iPositivity, iEnergy));

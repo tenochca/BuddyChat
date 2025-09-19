@@ -18,11 +18,11 @@ import com.example.buddychat.tts.BuddyTTS;
 
 // Emotion Response Handling
 import com.example.buddychat.utils.Emotions;
-import com.example.buddychat.utils.HeadMotors;
+import com.example.buddychat.utils.IntentDetector;
 
-// ====================================================================
+// =======================================================================
 // Handles the WebSocket responses
-// ====================================================================
+// =======================================================================
 // UI updates, logs, start/end button
 public class ChatUiCallbacks implements ChatListener {
     private static final String TAG  = "DPU_ChatListener";
@@ -43,9 +43,9 @@ public class ChatUiCallbacks implements ChatListener {
         this.runningStateSink  = runningStateSink;
     }
 
-    // --------------------------------------------------------------------
+    // -----------------------------------------------------------------------
     // ChatListener
-    // --------------------------------------------------------------------
+    // -----------------------------------------------------------------------
     @Override public void onOpen() {
         ui.post(() -> {
             runningStateSink.accept(true);  // tells MainActivity
@@ -67,10 +67,7 @@ public class ChatUiCallbacks implements ChatListener {
                 case "expression"   : onExpression (obj); break;
             }
 
-        } catch (JSONException e) {
-            ui.post(() -> Toast.makeText(
-                    startEndBtn.getContext(), "Bad JSON: " + e.getMessage(), Toast.LENGTH_SHORT).show());
-        }
+        } catch (JSONException e) { Log.e(TAG, String.format("%s Bad JSON: %s", TAG, e.getMessage())); }
     }
 
     @Override public void onClosed() {
@@ -90,20 +87,16 @@ public class ChatUiCallbacks implements ChatListener {
         });
     }
 
-    // --------------------------------------------------------------------
+    // -----------------------------------------------------------------------
     // Handle different types of WS messages
-    // --------------------------------------------------------------------
+    // -----------------------------------------------------------------------
     /** Handle "llm_response" data from the backend (an utterance from the LLM). */
     private void onLLMResponse(JSONObject obj) {
         final String body = obj.optString("data", "(empty)");
         final String time = obj.optString("time", "");
 
         // ToDo: Testing the "Yes" detection functionality here
-        boolean isYes = body.strip().split("\\s+", 2)[0].equalsIgnoreCase("yes");
-        if (isYes) {
-            Log.i(TAG, String.format("%s YES detected in LLM response", TAG));
-            //HeadMotors.buddyYesMove();
-        }
+        IntentDetector.IntentDetection(body);
 
         // Hop to UI thread to do actions
         ui.post(() -> {
