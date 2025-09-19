@@ -40,13 +40,11 @@ import com.bfr.buddysdk.BuddySDK;
  *   <li> EnableUsbCallback()  => Registers a CB with the sensor module (reads sensor data)
  *   <li> DisableUsbCallback() => Unregisters the CB (no more data will be read)
  *   <li> rotateTowardsAudio() => Takes the average angle from the recent queue, rotates Buddy that direction
- *   </ul>
+ * </ul>
  */
 public class AudioTracking {
     private static final String TAG = "DPU_AudioTracking";
 
-    private static final int MIN_DECIBELS       =    40;
-    private static final int MIN_ANGLE          =   150;
     private static final int UPDATE_INTERVAL_MS = 3_000;
 
     private static          Handler handler;
@@ -56,29 +54,8 @@ public class AudioTracking {
     static float AmbientNoise  = 0; // Sound volume in Decibels
     static float LocationAngle = 0; // Degree location of the sound
 
-    // --------------------------------------------------------------------
     // Queue of recent values for the LocationAngle
-    // --------------------------------------------------------------------
-    private static final int N = 20;
-    private static final ArrayBlockingQueue<Float> angleQueue = new ArrayBlockingQueue<>(N);
-
-    // Queue methods
-    private static void pushAngle  (float locationAngle) { if (!angleQueue.offer(locationAngle)) { angleQueue.poll(); angleQueue.offer(locationAngle); }}
-    public  static void clearAngles() { angleQueue.clear(); }                 // Empty the queue
-    static List<Float> recentAngles() { return new ArrayList<>(angleQueue); } // Snapshot copy
-    static List<Float>  drainAngles() { List<Float> angleList = recentAngles(); clearAngles(); return angleList; }
-
-    // Get the average angle
-    public static float averageAngle() {
-        // Make a snapshot to avoid iterating while it changes
-        Object[] snap = angleQueue.toArray();
-        if (snap.length == 0) return 0f; // Return 0 if the queue is empty
-
-        // Iterate through to get the average
-        double sum = 0;
-        for (Object o : snap) sum += (Float) o;
-        return (float)(sum / snap.length);
-    }
+    private static final AngleBuffer angleBuf = AngleBuffer.defaultAudio(/*capacity*/ 20);
 
 
     // --------------------------------------------------------------------
@@ -88,13 +65,14 @@ public class AudioTracking {
     public static void setupSensors() {
         BuddySDK.USB.enableSensorModule(true, new IUsbCommadRsp.Stub() {
             @Override public void onSuccess(String s) { Log.i(TAG, "-------------- Enabled Sensors --------------");  }
-            @Override public void onFailed (String s) { Log.i(TAG, "Failed to Enable sensors:" + s); }
+            @Override public void onFailed (String s) { Log.w(TAG, "Failed to Enable sensors:" + s); }
         });
     }
 
     // ====================================================================
     // Method #1: Looped "Runnable" call with a set update interval
     // ====================================================================
+    // ToDo: This will be deleted but I'm just keeping it for now since I might want to keep it as a reference
     /** Runs the continuous checks for the sensors. */
     private static final Runnable trackingRunnable = new Runnable() {
         @Override public void run() { if (enabled) { updateSensors(); handler.postDelayed(this, UPDATE_INTERVAL_MS); }}
@@ -111,8 +89,8 @@ public class AudioTracking {
     public static void toggleTracking(boolean enable) {
         if (handler == null) { handler = new Handler(Looper.getMainLooper()); } // Make sure the handler is initialized
         // Enable & disable
-        if      ( enable & !enabled) { enabled = true;  handler.post           (trackingRunnable); }
-        else if (!enable &  enabled) { enabled = false; handler.removeCallbacks(trackingRunnable); }
+        if      ( enable && !enabled) { enabled = true;  handler.post           (trackingRunnable); }
+        else if (!enable &&  enabled) { enabled = false; handler.removeCallbacks(trackingRunnable); }
     }
 
     // ====================================================================
@@ -125,9 +103,11 @@ public class AudioTracking {
         @Override public void ReceiveBodySensorData (BodySensorData  bodySensorData ) throws RemoteException { }
 
         @Override public void ReceivedVocalData(VocalData vocalData) throws RemoteException {
-            float ambientNoise  = vocalData.AmbientSoundLevel;       // Sound level in dB
-            float locationAngle = vocalData.SoundSourceLocalisation; // Direction of the sound in degrees
-            processAudioData(ambientNoise, locationAngle);
+            angleBuf.push(vocalData.SoundSourceLocalisation);
+
+            // float ambientNoise  = vocalData.AmbientSoundLevel;       // Sound level in dB
+            // float locationAngle = vocalData.SoundSourceLocalisation; // Direction of the sound in degrees
+            // processAudioData(ambientNoise, locationAngle);
         }
     };
 
@@ -139,29 +119,26 @@ public class AudioTracking {
     // ====================================================================
     // Do something with the sensor values...
     // ====================================================================
-    // ToDo: Should use callbacks that disable the audio tracking while it is moving and re-enables it once the Rotate call is completed.
     // For now, we are just going to do logging
     private static void processAudioData(float ambientNoise, float locationAngle) {
         if (locationAngle == -100) { return; } // -100 locationAngle is the equivalent of Null
-        pushAngle(locationAngle);              // Add it to the queue
-        //Log.d(TAG, String.format("%s ===== Ambient dB: %s, Angle: %s =====", TAG, ambientNoise, locationAngle));
 
+        //Log.d(TAG, String.format("%s ===== Ambient dB: %s, Angle: %s =====", TAG, ambientNoise, locationAngle));
         // Update the stored values
         //AmbientNoise = ambientNoise; LocationAngle = locationAngle;
     }
 
-    // ToDo: Should I make sure this is paused while we do this?
+    // ToDo: Should use callbacks that disable the audio tracking while it is moving and re-enables it once the Rotate call is completed.
     /** Use the queue of Buddy's most recent audioLocation readings to turn Buddy. */
     public static void rotateTowardsAudio() {
         // Get the average of the recent angles & reset the queue
-        final float recentAngle = averageAngle(); clearAngles();
-        Log.i(TAG, String.format("%s averageAngle: %.2f | attempting to rotate Buddy", TAG, recentAngle));
+        final float meanAngle = angleBuf.averageCircularAndClear(); // atomic grab+clear
+        Log.i(TAG, String.format("%s averageAngle: %.2f | attempting to rotate Buddy", TAG, meanAngle));
 
         // Send the command to rotate
-        RotateBody.Rotate(5, recentAngle);
-
-        // Update the stored angle
-        LocationAngle = recentAngle;
+        RotateBody.Rotate(5, meanAngle);
     }
+
+    public static float getRecentAngle() { return angleBuf.averageCircularAndClear(); }
 
 }

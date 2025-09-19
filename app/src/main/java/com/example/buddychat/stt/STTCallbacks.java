@@ -4,56 +4,57 @@ import android.annotation.SuppressLint;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
-
 import android.widget.TextView;
-import android.widget.Toast;
 
+// App code
 import com.bfr.buddy.ui.shared.FacialExpression;
 import com.example.buddychat.utils.Emotions;
 import com.example.buddychat.utils.AudioTracking;
 
-// ====================================================================
+// =======================================================================
 // Handles Recognized Speech Events
-// ====================================================================
+// =======================================================================
+// ToDo: There are going to be some temporary elements here
 public class STTCallbacks implements STTListener {
     private static final String TAG  = "[DPU_STTCallback]";
 
-    /// UI references that will be modified
+    // UI references that will be modified
     private final TextView          sttView;
+    private final TextView          testView1;
     private final UtteranceCallback utteranceCallback;
 
-    /// Handler to hop onto UI thread.
+    // Handler to hop onto UI thread.
     private final Handler ui = new Handler(Looper.getMainLooper());
 
-    /** Initialization */
-    public STTCallbacks(TextView sttView, UtteranceCallback utteranceCallback) {
+    // Initialization
+    public STTCallbacks(TextView sttView, TextView testView1, UtteranceCallback utteranceCallback) {
         this.sttView = sttView;
+        this.testView1 = testView1;
         this.utteranceCallback = utteranceCallback;
     }
 
-    // --------------------------------------------------------------------
+    // -----------------------------------------------------------------------
     // Methods
-    // --------------------------------------------------------------------
+    // -----------------------------------------------------------------------
     @SuppressLint("DefaultLocale")
-    @Override
-    public void onText(String utterance, float confidence, String rule) {
+    @Override public void onText(String utterance, float confidence, String rule) {
+        // ToDo: ---- Trying an idea out ----
+        Emotions.setMood(FacialExpression.THINKING);
+        float averageAngle = AudioTracking.getRecentAngle();
+        Log.i(TAG, String.format("%s Recent average LocationAngle: %.4f", TAG, averageAngle));
+
+        // Do some stuff on the UI thread
         ui.post(() -> {
             // Send the message over the WebSocket
             utteranceCallback.sendString(utterance);
 
-            // ToDo: ---- Trying an idea out ----
-            Emotions.setMood(FacialExpression.THINKING);
-            float averageAngle = AudioTracking.averageAngle(); AudioTracking.clearAngles();
-            Log.i(TAG, String.format("%s Recent average LocationAngle: %.4f", TAG, averageAngle));
-
             // Logging the message
             Log.i(TAG, String.format("%s Utt: %s (conf: %.3f, rule: %s)", TAG, utterance, confidence, rule));
-            sttView.setText(String.format("User (%.3f): %s", (confidence/1_000), utterance));
-            // Toast.makeText(sttView.getContext(), "Speech recognized", Toast.LENGTH_LONG).show();
+            sttView  .setText(String.format("User (%.3f): %s", (confidence/1_000), utterance));
+            testView1.setText(String.format("Speech Angle: %.4f", averageAngle));
         });
     }
 
-    @Override
-    public void onError(String e) { Log.e(TAG,  " error: " + e); }
+    @Override public void onError(String e) { Log.e(TAG,  " error: " + e); }
 
 }

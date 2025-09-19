@@ -49,9 +49,11 @@ public class MainActivity extends BuddyActivity {
     private TextView userView;       // Display user's most recent message
     private TextView botView;        // Display Buddy's most recent message
     private Button   buttonStartEnd; // Start or end the chat/backend websocket connection
+
     private Button   buttonTester1;  // [Development] Trigger features to be tested
     private Button   buttonTester2;  // [Development] Emergency stop any motors/movements
     private Button   buttonTester3;  // [Development] Trigger features to be tested
+    private TextView testView1;
 
     /// WebSocket related
     private volatile String            authToken;
@@ -79,7 +81,7 @@ public class MainActivity extends BuddyActivity {
         chatCallbacks = new ChatUiCallbacks(botView, buttonStartEnd, running -> isRunning = running);
 
         // STT callback object (we can pass it stuff here, like the textView)
-        sttCallbacks = new STTCallbacks(userView, chat::sendString);
+        sttCallbacks = new STTCallbacks(userView, testView1, chat::sendString);
 
         // Login, set auth tokens, and fetch the profile
         final LoginAndProfile loginAndProfile = new LoginAndProfile(textUserInfo, botView);
@@ -151,19 +153,22 @@ public class MainActivity extends BuddyActivity {
         userView       = findViewById(R.id.userView      );
         botView        = findViewById(R.id.botView       );
         buttonStartEnd = findViewById(R.id.buttonStartEnd);
+
         buttonTester1  = findViewById(R.id.buttonTester1 );
         buttonTester2  = findViewById(R.id.buttonTester2 );
         buttonTester3  = findViewById(R.id.buttonTester3 );
+        testView1      = findViewById(R.id.testView1     );
     }
 
     /** Set button listeners */
     private void wireButtons() {
         // Start or end the chat/backend websocket connection
         buttonStartEnd.setOnClickListener(v -> {
-            Log.w(TAG, String.format("%s", TAG));
+            Log.w(TAG, String.format("%s StartEnd Button pressed", TAG));
             if (!isRunning) { chat.connect(authToken, chatCallbacks); } else { chat.endChat(); }
 
             BuddyTTS.toggle(); BuddySTT.toggle(sttCallbacks);
+
             Toast.makeText(this, (isRunning ? "Chat connected; STT & TTS started.": "Chat ended; STT & TTS paused."), Toast.LENGTH_LONG).show();
         });
 
@@ -176,15 +181,19 @@ public class MainActivity extends BuddyActivity {
             HeadMotors.getHeadMotorStatus();
             HeadMotors.buddyYesMove();
             Emotions.setMood(FacialExpression.ANGRY, 2_000L);
+            HeadMotors.getHeadMotorStatus();
         });
 
         // Testing Button #3: Trigger more features
         buttonTester3.setOnClickListener(v -> {
             Log.w(TAG, String.format("%s Testing Button #3 pressed.", TAG));
+            HeadMotors.getHeadMotorStatus();
             HeadMotors.resetYesPosition(); // Reset Yes motor to position 0
             Emotions.setMood(FacialExpression.HAPPY, 2_000L);
             HeadMotors.getHeadMotorStatus();
         });
+
+
 
         // Testing Button #2: Emergency stop any motors/movements
         buttonTester2.setOnClickListener(v -> {
@@ -194,9 +203,5 @@ public class MainActivity extends BuddyActivity {
         });
 
     }
-
-
-
-
 
 }
