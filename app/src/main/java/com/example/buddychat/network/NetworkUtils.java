@@ -14,30 +14,29 @@ import com.example.buddychat.network.model.Profile;
 import com.example.buddychat.network.model.AuthResponse;
 
 
-// ====================================================================
+// =======================================================================
 // API call utility
-// ====================================================================
+// =======================================================================
 // Right now just logging in & health check
-// ToDo: Logging messages for login success should be better
 public class NetworkUtils {
-    // --------------------------------------------------------------------
+    // -----------------------------------------------------------------------
     // Constants
-    // --------------------------------------------------------------------
+    // -----------------------------------------------------------------------
     public static final OkHttpClient CLIENT = new OkHttpClient(); // Re-used client
     private static final Gson GSON = new Gson();
-    private static final String TAG  = "HTTP";
+    private static final String TAG  = "[DPU_NetworkUtils]";
     //private static final String BASE = "https://sandbox.cognibot.org/api";
     //private static final String BASE = "http://10.0.2.2:8000/api";
     private static final String BASE =
             "1".equals(BuildConfig.TEST_LOCAL)
-                    ? "http://10.0.2.2:8000/api"            // local docker container
-                    : "https://cognibot.org/api";         // cloud server
-                    //: "https://sandbox.cognibot.org/api";   // cloud server
+                    ? "http://10.0.2.2:8000/api"             // local docker container
+                    : "https://cognibot.org/api";            // cloud server
+                    //: "https://sandbox.cognibot.org/api";  // cloud server
 
 
-    // --------------------------------------------------------------------
+    // -----------------------------------------------------------------------
     // Callbacks
-    // --------------------------------------------------------------------
+    // -----------------------------------------------------------------------
     public interface AuthCallback {
         void onSuccess(String accessToken);
         void onError(Throwable t);
@@ -47,42 +46,27 @@ public class NetworkUtils {
         void onError(Throwable t);
     }
 
-    // --------------------------------------------------------------------
+    // -----------------------------------------------------------------------
     // Pings the /health endpoint and logs the HTTP status + body
-    // --------------------------------------------------------------------
+    // -----------------------------------------------------------------------
     public static void pingHealth() {
         Request request = new Request.Builder().url(BASE + "/health/").get().build();
 
         CLIENT.newCall(request).enqueue(new Callback() {
-            @Override
-            public void onFailure(@NonNull Call call, @NonNull IOException e) {Log.e(TAG, "Ping failed", e);}
-
-            @Override
-            public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
+            @Override public void onFailure (@NonNull Call call, @NonNull IOException e) {Log.e(TAG, String.format("%s Ping failed: %s", TAG, e));}
+            @Override public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
                 try (ResponseBody body = response.body()) {
                     String text = body != null ? body.string() : "<empty>";
-                    Log.d(TAG, "Status " + response.code() + " – " + text);
+                    Log.d(TAG, String.format("%s Status: %s - %s", TAG, response.code(), text));
                 }
             }
         });
     }
 
-    // --------------------------------------------------------------------
-    // Sign in / token acquisition
-    // --------------------------------------------------------------------
-    public static void getTokens() {
-        Log.d("NETWORK", "getTokens not yet implemented.");
 
-        String apiUser = BuildConfig.API_USER;
-        String apiPass = BuildConfig.API_PASS;
-        String message = String.format("Username: %s, Password: %s", apiUser, apiPass);
-
-        Log.d("TEST", message);
-    }
-
-    // --------------------------------------------------------------------
+    // -----------------------------------------------------------------------
     // Login
-    // --------------------------------------------------------------------
+    // -----------------------------------------------------------------------
     public static void login(AuthCallback cb) {
         // Setup the request payload
         JsonObject payload = new JsonObject();
@@ -94,23 +78,21 @@ public class NetworkUtils {
         Request     req  = new Request.Builder().url(endpoint).post(body).build();
 
         // Logging
-        Log.d("LOGIN", String.format("Calling %s with username: %s, password: %s", endpoint, BuildConfig.API_USER, BuildConfig.API_PASS));
+        Log.d(TAG, String.format("%s Calling %s with username: %s, password: %s", TAG, endpoint, BuildConfig.API_USER, BuildConfig.API_PASS));
 
         // Make the API call
         CLIENT.newCall(req).enqueue(new Callback() {
-            @Override
-            public void onFailure(@NonNull Call c, @NonNull IOException e) { cb.onError(e); }
-
-            @Override
-            public void onResponse(@NonNull Call c, @NonNull Response r) {
+            @Override public void onFailure (@NonNull Call c, @NonNull IOException e) { cb.onError(e); }
+            @Override public void onResponse(@NonNull Call c, @NonNull Response    r) {
                 try (ResponseBody b = r.body()) {
                     if (!r.isSuccessful()) throw new IOException("HTTP " + r.code());
                     String raw = b.string();
-                    Log.d("HTTP", "Token JSON = " + raw);
+                    Log.d(TAG, String.format("%s Token JSON: %s", TAG, raw));
 
                     AuthResponse ar = GSON.fromJson(raw, AuthResponse.class);
                     cb.onSuccess(ar.access);
-                    Log.d("LOGIN", "Success");
+                    Log.i(TAG, String.format("%s Login success", TAG));
+
                 } catch (Exception ex) { cb.onError(ex); }
             }
         });
@@ -129,9 +111,11 @@ public class NetworkUtils {
             @Override public void onFailure (@NonNull Call c, @NonNull IOException e) { cb.onError(e); }
             @Override public void onResponse(@NonNull Call c, @NonNull Response r) {
                 try (ResponseBody b = r.body()) {
-                    if (!r.isSuccessful()) throw new IOException("HTTP " + r.code());
+                    if (!r.isSuccessful()) { throw new IOException("HTTP " + r.code());                  }
+                    if (b == null        ) { Log.e(TAG, String.format("%s body was null", TAG)); return; }
+
                     String raw = b.string();
-                    Log.i("HTTP", "PROFILE JSON = " + raw);
+                    Log.i(TAG, String.format("%s PROFILE JSON: %s", TAG, raw));
 
                     Profile p = GSON.fromJson(raw, Profile.class);
                     cb.onSuccess(p);
