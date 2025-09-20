@@ -20,10 +20,10 @@ public class HeadMotors {
     // Motion parameters (tune as needed)
     private static final float  SPEED         =   5f;   // 0...~49, keep low
     private static final float  DOWN_ANGLE    = -10f;   // degrees
-    private static final float  UP_ANGLE      =  10f;   // degrees
+    private static final float  UP_ANGLE      =   5f;   // degrees
     private static final float  HOME_ANGLE    =   0f;   // degrees
-    private static final long   SETTLE_MS     =  60L;   // small pause between steps
-    private static final int    MAX_RETRIES   =   2;
+    private static final long   SETTLE_MS     =  30L;   // small pause between steps
+    private static final int    MAX_RETRIES   =    2;
 
     // Simple state machine for a nod
     private enum Step { DOWN, UP, HOME, DONE }

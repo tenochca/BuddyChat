@@ -186,7 +186,7 @@ public class MainActivity extends BuddyActivity {
 
             HeadMotors.nodYes();
 
-            Emotions.setMood(FacialExpression.ANGRY, 2_000L);
+            Emotions.setMood(FacialExpression.SURPRISED, 2_000L);
 
             HeadMotors.getHeadMotorStatus();
         });
@@ -198,7 +198,7 @@ public class MainActivity extends BuddyActivity {
 
             HeadMotors.resetYesPosition(); // Reset Yes motor to position 0
 
-            Emotions.setMood(FacialExpression.HAPPY, 2_000L);
+            Emotions.setMood(FacialExpression.SAD, 2_000L);
 
             HeadMotors.getHeadMotorStatus();
         });
