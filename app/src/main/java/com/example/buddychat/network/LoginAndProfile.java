@@ -7,6 +7,7 @@ import android.widget.Toast;
 import android.util.Log;
 
 import com.example.buddychat.R;
+import com.example.buddychat.network.model.AuthListener;
 import com.example.buddychat.network.model.Profile;
 
 // =======================================================================
@@ -34,15 +35,13 @@ public class LoginAndProfile {
     // Handles API requests for logging in
     // --------------------------------------------------------------------
     /** Adds some stuff to the UI (username, etc), and sets the auth token. */
-    public String doLoginAndProfile() {
+    public void doLoginAndProfile(AuthListener listener) {
         Log.d(TAG, String.format("%s Logging in on app startup...", TAG));
         NetworkUtils.pingHealth();  // Test the API
         NetworkUtils.login(new NetworkUtils.AuthCallback() {
-            @Override public void onSuccess(String    accessToken) { onLoginSuccess(accessToken); }
-            @Override public void onError  (Throwable t          ) { onLoginError  (t          ); }
+            @Override public void onSuccess(String    accessToken) { onLoginSuccess(accessToken); listener.onSuccess(accessToken); }
+            @Override public void onError  (Throwable t          ) { onLoginError  (t          ); listener.onError  (t          ); }
         });
-
-        return authToken; // Return the accessToken
     }
 
     // --------------------------------------------------------------------

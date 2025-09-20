@@ -16,6 +16,7 @@ import com.bfr.buddy.ui.shared.FacialExpression;
 
 // Speech System
 import com.example.buddychat.network.LoginAndProfile;
+import com.example.buddychat.network.model.AuthListener;
 import com.example.buddychat.network.ws.ChatSocketManager;
 import com.example.buddychat.network.ws.ChatUiCallbacks;
 
@@ -83,9 +84,12 @@ public class MainActivity extends BuddyActivity {
         // STT callback object (we can pass it stuff here, like the textView)
         sttCallbacks = new STTCallbacks(userView, testView1, chat::sendString);
 
-        // Login, set auth tokens, and fetch the profile
+        // Login, set auth tokens, and fetch the profile. ToDo: Could also use this to set the profile information here...
         final LoginAndProfile loginAndProfile = new LoginAndProfile(textUserInfo, botView);
-        authToken = loginAndProfile.doLoginAndProfile();
+        loginAndProfile.doLoginAndProfile(new AuthListener() {
+            @Override public void onSuccess(String    token) { authToken = token; }
+            @Override public void onError  (Throwable t    ) { Log.e(TAG, "Login failed"); }
+        });
     }
 
     // ====================================================================
